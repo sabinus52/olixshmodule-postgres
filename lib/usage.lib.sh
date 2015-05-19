@@ -24,6 +24,7 @@ function module_postgres_usage_main()
     echo -e "${Cjaune} init    ${CVOID}  : Initialisation du module"
     echo -e "${Cjaune} dump    ${CVOID}  : Fait un dump d'une base de données"
     echo -e "${Cjaune} restore ${CVOID}  : Restauration d'une base de données"
+    echo -e "${Cjaune} sync    ${CVOID}  : Synchronisation d'une base à partir d'un serveur distant"
     echo -e "${Cjaune} help    ${CVOID}  : Affiche cet écran"
 }
 
@@ -70,6 +71,27 @@ function module_postgres_usage_restore()
     echo -en "${CBLANC} --host=${OLIX_MODULE_POSTGRES_HOST} ${CVOID}"; stdout_strpad "${OLIX_MODULE_POSTGRES_HOST}" 13 " "; echo " : Host du serveur POSTGRES"
     echo -en "${CBLANC} --port=${OLIX_MODULE_POSTGRES_PORT} ${CVOID}"; stdout_strpad "${OLIX_MODULE_POSTGRES_PORT}" 13 " "; echo " : Port du serveur POSTGRES"
     echo -en "${CBLANC} --user=${OLIX_MODULE_POSTGRES_USER} ${CVOID}"; stdout_strpad "${OLIX_MODULE_POSTGRES_USER}" 13 " "; echo " : User du serveur POSTGRES"
+    echo
+    echo -e "${CJAUNE}Liste des BASES disponibles${CVOID} :"
+    for I in $(module_postgres_getListDatabases); do
+        echo -en "${Cjaune} ${I} ${CVOID}"
+        stdout_strpad "${I}" 20 " "
+        echo " : Base de de données ${I}"
+    done
+}
+
+
+###
+# Usage de l'action SYNC
+##
+function module_postgres_usage_sync()
+{
+    logger_debug "module_postgres_usage_sync ()"
+    stdout_printVersion
+    echo
+    echo -e "Synchronisation d'une base à partir d'un serveur PostreSQL distant"
+    echo
+    echo -e "${CBLANC} Usage : ${CVIOLET}$(basename ${OLIX_ROOT_SCRIPT}) ${CVERT}postgres ${CJAUNE}sync${CVOID} ${CBLANC}base_destination${CVOID}"
     echo
     echo -e "${CJAUNE}Liste des BASES disponibles${CVOID} :"
     for I in $(module_postgres_getListDatabases); do
@@ -143,4 +165,28 @@ function module_postgres_usage_getParams()
     logger_debug "OLIX_MODULE_POSTGRES_BACKUP_REPORT=${OLIX_MODULE_POSTGRES_BACKUP_REPORT}"
     logger_debug "OLIX_MODULE_POSTGRES_BACKUP_EMAIL=${OLIX_MODULE_POSTGRES_BACKUP_EMAIL}"
     logger_debug "OLIX_MODULE_POSTGRES_BACKUP_BASES=${OLIX_MODULE_POSTGRES_BACKUP_BASES}"
+}
+
+
+###
+# Lecture d'une base de donées
+# @return string OLIX_STDIN_RETURN
+##
+function module_postgres_usage_readDatabase()
+{
+    logger_debug "module_postgres_usage_readDatabase ($1, $2, $3, $4)"
+
+    local BASE LIST_BASE
+    LIST_BASE=$(module_postgres_getListDatabases "$1" "$2" "$3" "$4")
+    [[ $? -ne 0 ]] && logger_error "Impossible de se connecter au serveur '$1'"
+
+    while true; do
+        for I in ${LIST_BASE}; do
+            echo -e "${Cjaune} $I${CVOID} : Base ${I}"
+        done
+        echo -en "Choix de la base de données [${CBLANC}${CVOID}] : "
+        read BASE
+        core_contains "${BASE}" "${LIST_BASE}" && break
+    done
+    OLIX_STDIN_RETURN=${BASE}
 }

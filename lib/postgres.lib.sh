@@ -34,6 +34,24 @@ function module_postgres_isRunning()
 
 
 ###
+# Vérifie si une base existe
+# @param $1 : Nom de la base à vérifier
+# @param $2 : Host du serveur Postgres
+# @param $3 : Port du serveur
+# @param $4 : Utilisateur postgres
+# @return bool
+##
+function module_postgres_isBaseExists()
+{
+    logger_debug "module_postgres_isBaseExists ($1, $2, $3, $4)"
+
+    local BASES=$(module_postgres_getListDatabases "$2" "$3" "$4")
+    core_contains "$1" "${BASES}" && return 0
+    return 1
+}
+
+
+###
 # Retroune la liste des bases de données
 # @param $1 : Host du serveur Postgres
 # @param $2 : Port du serveur
@@ -43,7 +61,7 @@ function module_postgres_isRunning()
 ##
 function module_postgres_getListDatabases()
 {
-    local OPTS=$(module_postgres_getOptionsConnection $1 $2 $3 $4)
+    local OPTS=$(module_postgres_getOptionsConnection "$1" "$2" "$3" "$4")
     logger_debug "module_postgres_getListDatabases (${OPTS})"
 
     local DATABASES
@@ -100,7 +118,7 @@ function module_postgres_getOptionsConnection()
 ##
 function module_postgres_dumpDatabase()
 {
-    local OPTS=$(module_postgres_getOptionsConnection $3 $4 $5)
+    local OPTS=$(module_postgres_getOptionsConnection "$3" "$4" "$5")
     logger_debug "module_postgres_dumpDatabase ($1, $2, ${OPTS})"
 
     if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
@@ -124,7 +142,7 @@ function module_postgres_dumpDatabase()
 ##
 function module_postgres_restoreDatabase()
 {
-    local OPTS=$(module_postgres_getOptionsConnection $3 $4 $5)
+    local OPTS=$(module_postgres_getOptionsConnection "$3" "$4" "$5")
     logger_debug "module_postgres_restoreDatabase ($1, $2, ${OPTS})"
 
     if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
@@ -134,4 +152,26 @@ function module_postgres_restoreDatabase()
     fi
     [[ $? -ne 0 ]] && return 1
     return 0
+}
+
+
+###
+# Copie une base de données depuis un serveur distant vers une base locale
+# @param $1  : Paramètre de connexion de la source
+# @param $2  : Base source
+# @param $3  : Paramètre de connexion locale
+# @param $4  : Base de destination
+# @return bool
+##
+function module_postgres_synchronizeDatabase()
+{
+    logger_debug "module_postgres_synchronizeDatabase ($1, $2, $3, $4)"
+
+    if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
+        pg_dump --verbose --format=c $1 $2 | pg_restore --verbose $3 --dbname=$4
+    else
+        pg_dump --format=c $1 $2 | pg_restore $3 --dbname=$4 2> ${OLIX_LOGGER_FILE_ERR}
+    fi
+    [[ $? -eq 0 && ${PIPESTATUS} -eq 0 ]] && return 0
+    return 1
 }

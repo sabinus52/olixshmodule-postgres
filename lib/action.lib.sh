@@ -126,3 +126,37 @@ function module_postgres_action_restore()
 
     echo -e "${Cvert}Action terminée avec succès${CVOID}"
 }
+
+
+
+###
+# Synchronise une base de données depuis un serveur distant
+##
+function module_postgres_action_sync()
+{
+    logger_debug "module_postgres_action_sync ($@)"
+
+    # Affichage de l'aide
+    [ $# -lt 1 ] && module_postgres_usage_sync && core_exit 1
+
+    module_postgres_isBaseExists "${OLIX_MODULE_POSTGRES_PARAM1}"
+    [[ $? -ne 0 ]] && logger_error "La base '${OLIX_MODULE_POSTGRES_PARAM1}' n'existe pas"
+
+    # Demande des infos de connexion à la base distante
+    stdin_readConnexionServer "" "5432" "postgres"
+
+    echo "Choix de la base de données source"
+    module_postgres_usage_readDatabase "${OLIX_STDIN_RETURN_HOST}" "${OLIX_STDIN_RETURN_PORT}" "${OLIX_STDIN_RETURN_USER}" "${OLIX_STDIN_RETURN_PASS}"
+    OLIX_MODULE_POSTGRES_PARAM2=${OLIX_STDIN_RETURN}
+
+    if [[ -n ${OLIX_MODULE_POSTGRES_PARAM2} ]]; then
+        logger_info "Synchronisation de la base '${OLIX_STDIN_RETURN_HOST}:${OLIX_MODULE_POSTGRES_PARAM2}' vers '${OLIX_MODULE_POSTGRES_PARAM1}'"
+        module_postgres_synchronizeDatabase \
+            "--host=${OLIX_STDIN_RETURN_HOST} --port=${OLIX_STDIN_RETURN_PORT} --username=${OLIX_STDIN_RETURN_USER}" \
+            "${OLIX_MODULE_POSTGRES_PARAM2}" \
+            "--host=${OLIX_MODULE_POSTGRES_HOST} --port=${OLIX_MODULE_POSTGRES_PORT} --username=${OLIX_MODULE_POSTGRES_USER}" \
+            "${OLIX_MODULE_POSTGRES_PARAM1}"
+        [[ $? -ne 0 ]] && logger_error "Echec de la synchronisation de '${OLIX_STDIN_RETURN_HOST}:${OLIX_MODULE_POSTGRES_PARAM2}' vers '${OLIX_MODULE_POSTGRES_PARAM1}'"
+        echo -e "${Cvert}Action terminée avec succès${CVOID}"
+    fi
+}
