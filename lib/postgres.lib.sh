@@ -108,6 +108,25 @@ function module_postgres_getOptionsConnection()
 
 
 ###
+# Fait un dump des objects globaux de l'instance du serveur
+# @param $1  : Fichier de dump
+# @param $2  : Host du serveur Postgres
+# @param $3  : Port du serveur
+# @param $4  : Utilisateur Postgres
+# @return bool
+##
+function module_postgres_dumpOnlyGlobalObjects()
+{
+    local OPTS=$(module_postgres_getOptionsConnection "$2" "$3" "$4")
+    logger_debug "module_postgres_dumpOnlyGlobalObjects ($1, ${OPTS})"
+
+    pg_dumpall --globals-only ${OPTS} > $1 2> ${OLIX_LOGGER_FILE_ERR}
+    [[ $? -ne 0 ]] && return 1
+    return 0
+}
+
+
+###
 # Fait un dump d'une base
 # @param $1  : Nom de la base
 # @param $2  : Fichier de dump
@@ -174,4 +193,56 @@ function module_postgres_synchronizeDatabase()
     fi
     [[ $? -eq 0 && ${PIPESTATUS} -eq 0 ]] && return 0
     return 1
+}
+
+
+###
+# Fait une sauvegarde d'une base Postgres
+# @param $1 : Nom de la base
+# @param $2 : Emplacement du backup
+# @param $3 : Compression
+# @param $4 : Rétention pour la purge
+# @param $5 : FTP type utilisé (false|lftp|ncftp)
+# @param $6 : Host du FTP
+# @param $7 : Utilisateur du FTP
+# @param $8 : Password du FTP
+# @param $9 : Chemin du FTP
+# @return bool
+##
+function module_postgres_backupDatabase()
+{
+    logger_debug "module_postgres_backupDatabase ($1)"
+    local BASE=$1
+    local DIRBCK=$2
+    local COMPRESS=$3
+    local PURGE=$4
+    local FTP=$5
+    local FTP_HOST=$6
+    local FTP_USER=$7
+    local FTP_PASS=$8
+    local FTP_PATH=$9
+
+    stdout_printHead2 "Dump de la base Postgres %s" "${BASE}"
+    report_printHead2 "Dump de la base Postgres %s" "${BASE}"
+
+    if ! module_postgres_isBaseExists "${BASE}"; then
+        report_warning "La base '${BASE}' n'existe pas"
+        logger_warning "La base '${BASE}' n'existe pas"
+        return 1
+    fi
+
+    local DUMP="${DIRBCK}/dump-${BASE}-${OLIX_SYSTEM_DATE}.dump"
+    logger_info "Sauvegarde basePostgres (${BASE}) -> ${DUMP}"
+
+    local START=${SECONDS}
+
+    module_postgres_dumpDatabase "${BASE}" "${DUMP}"
+    stdout_printMessageReturn $? "Sauvegarde de la base" "$(filesystem_getSizeFileHuman ${DUMP})" "$((SECONDS-START))"
+    report_printMessageReturn $? "Sauvegarde de la base" "$(filesystem_getSizeFileHuman ${DUMP})" "$((SECONDS-START))"
+    [[ $? -ne 0 ]] && report_warning && logger_warning2 && return 1
+
+    backup_finalize "${DUMP}" "${DIRBCK}" "${COMPRESS}" "${PURGE}" "dump-${BASE}-*" \
+        "${FTP}" "${FTP_HOST}" "${FTP_USER}" "${FTP_PASS}" "${FTP_PATH}"
+
+    return $?
 }

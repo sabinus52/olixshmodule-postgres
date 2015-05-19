@@ -160,3 +160,62 @@ function module_postgres_action_sync()
         echo -e "${Cvert}Action terminée avec succès${CVOID}"
     fi
 }
+
+
+###
+# Fait un backup complet des bases Postgres
+# @param $@ : Liste des bases à sauvegarder
+##
+function module_postgres_action_backup()
+{
+    logger_debug "module_postgres_action_backup ($@)"
+    local IS_ERROR=false
+
+    # Si aucune base définie, on récupère toutes les bases
+    if [[ -z ${OLIX_MODULE_POSTGRES_BACKUP_BASES} ]]; then
+        OLIX_MODULE_POSTGRES_BACKUP_BASES=$(module_postgres_getListDatabases)
+    fi
+    if [[ ! -d ${OLIX_MODULE_POSTGRES_BACKUP_DIR} ]]; then
+        logger_warning "Création du dossier inexistant OLIX_MODULE_POSTGRES_BACKUP_DIR: \"${OLIX_MODULE_POSTGRES_BACKUP_DIR}\""
+        mkdir ${OLIX_MODULE_POSTGRES_BACKUP_DIR} || logger_error "Impossible de créer OLIX_MODULE_POSTGRES_BACKUP_DIR: \"${OLIX_MODULE_POSTGRES_BACKUP_DIR}\""
+    elif [[ ! -w ${OLIX_MODULE_POSTGRES_BACKUP_DIR} ]]; then
+        logger_error "Le dossier '${OLIX_MODULE_POSTGRES_BACKUP_DIR}' n'a pas les droits en écriture"
+    fi
+
+    source lib/backup.lib.sh
+    source lib/report.lib.sh
+
+    # Mise en place du rapport
+    report_initialize "${OLIX_MODULE_POSTGRES_BACKUP_REPORT}" \
+                      "${OLIX_MODULE_POSTGRES_BACKUP_DIR}" "rapport-dump-postgres-${OLIX_SYSTEM_DATE}" \
+                      "${OLIX_MODULE_POSTGRES_BACKUP_EMAIL}"
+    stdout_printHead1 "Sauvegarde des bases PostgreSQL %s le %s à %s" "${HOSTNAME}" "${OLIX_SYSTEM_DATE}" "${OLIX_SYSTEM_TIME}"
+    report_printHead1 "Sauvegarde des bases PostgreSQL %s le %s à %s" "${HOSTNAME}" "${OLIX_SYSTEM_DATE}" "${OLIX_SYSTEM_TIME}"
+
+    # Sauvegarde des objets globaux
+    local PGGLOBAL="${OLIX_MODULE_POSTGRES_BACKUP_DIR}/pg-global-${OLIX_SYSTEM_DATE}.sql"
+    logger_info "Sauvegarde des objects globaux de l'instance -> ${PGGLOBAL}"
+    module_postgres_dumpOnlyGlobalObjects "${PGGLOBAL}"
+    stdout_printMessageReturn $? "Sauvegarde des objects globaux" "$(filesystem_getSizeFileHuman ${PGGLOBAL})" "$((SECONDS-START))"
+    report_printMessageReturn $? "Sauvegarde des objects globaux" "$(filesystem_getSizeFileHuman ${PGGLOBAL})" "$((SECONDS-START))"
+    [[ $? -ne 0 ]] && report_warning && logger_warning2 && IS_ERROR=true
+    backup_finalize "${PGGLOBAL}" "${OLIX_MODULE_POSTGRES_BACKUP_DIR}" "${OLIX_MODULE_POSTGRES_BACKUP_COMPRESS}" "${OLIX_MODULE_POSTGRES_BACKUP_PURGE}" "pg-global-*" false
+    [[ $? -ne 0 ]] && IS_ERROR=true
+
+    # Sauvegarde de chaque base
+    local I
+    for I in ${OLIX_MODULE_POSTGRES_BACKUP_BASES}; do
+        logger_info "Sauvegarde de la base '${I}'"
+        module_postgres_backupDatabase "${I}" "${OLIX_MODULE_POSTGRES_BACKUP_DIR}" "${OLIX_MODULE_POSTGRES_BACKUP_COMPRESS}" "${OLIX_MODULE_POSTGRES_BACKUP_PURGE}" false
+        [[ $? -ne 0 ]] && IS_ERROR=true
+    done
+
+    stdout_print; stdout_printLine; stdout_print "${Cvert}Sauvegarde terminée en $(core_getTimeExec) secondes${CVOID}"
+    report_print; report_printLine; report_print "Sauvegarde terminée en $(core_getTimeExec) secondes"
+
+    if [[ ${IS_ERROR} == true ]]; then
+        report_terminate "ERREUR - Rapport de backups des bases du serveur ${HOSTNAME}"
+    else
+        report_terminate "Rapport de backups des bases du serveur ${HOSTNAME}"
+    fi
+}

@@ -25,6 +25,7 @@ function module_postgres_usage_main()
     echo -e "${Cjaune} dump    ${CVOID}  : Fait un dump d'une base de données"
     echo -e "${Cjaune} restore ${CVOID}  : Restauration d'une base de données"
     echo -e "${Cjaune} sync    ${CVOID}  : Synchronisation d'une base à partir d'un serveur distant"
+    echo -e "${Cjaune} backup  ${CVOID}  : Réalisation d'une sauvegarde des bases Postgres avec rapport pour tâches planifiées"
     echo -e "${Cjaune} help    ${CVOID}  : Affiche cet écran"
 }
 
@@ -92,6 +93,37 @@ function module_postgres_usage_sync()
     echo -e "Synchronisation d'une base à partir d'un serveur PostreSQL distant"
     echo
     echo -e "${CBLANC} Usage : ${CVIOLET}$(basename ${OLIX_ROOT_SCRIPT}) ${CVERT}postgres ${CJAUNE}sync${CVOID} ${CBLANC}base_destination${CVOID}"
+    echo
+    echo -e "${CJAUNE}Liste des BASES disponibles${CVOID} :"
+    for I in $(module_postgres_getListDatabases); do
+        echo -en "${Cjaune} ${I} ${CVOID}"
+        stdout_strpad "${I}" 20 " "
+        echo " : Base de de données ${I}"
+    done
+}
+
+
+###
+# Usage de l'action BACKUP
+##
+function module_postgres_usage_backup()
+{
+    logger_debug "module_postgres_usage_backup ()"
+    stdout_printVersion
+    echo
+    echo -e "Réalisation d'une sauvegarde des bases Postgres avec rapport pour tâches planifiées"
+    echo
+    echo -e "${CBLANC} Usage : ${CVIOLET}$(basename ${OLIX_ROOT_SCRIPT}) ${CVERT}postgres ${CJAUNE}backup${CVOID} ${CBLANC}[base1..baseN] [OPTIONS]${CVOID}"
+    echo
+    echo -e "${Ccyan}OPTIONS${CVOID}"
+    echo -en "${CBLANC} --host=${OLIX_MODULE_POSTGRES_HOST} ${CVOID}"; stdout_strpad "--host=${OLIX_MODULE_POSTGRES_HOST}" 30 " "; echo " : Host du serveur Postgres"
+    echo -en "${CBLANC} --port=${OLIX_MODULE_POSTGRES_PORT} ${CVOID}"; stdout_strpad "--port=${OLIX_MODULE_POSTGRES_PORT}" 30 " "; echo " : Port du serveur Postgres"
+    echo -en "${CBLANC} --user=${OLIX_MODULE_POSTGRES_USER} ${CVOID}"; stdout_strpad "--user=${OLIX_MODULE_POSTGRES_USER}" 30 " "; echo " : User du serveur Postgres"
+    echo -en "${CBLANC} --dir=${OLIX_MODULE_POSTGRES_BACKUP_DIR} ${CVOID}"; stdout_strpad "--dir=${OLIX_MODULE_POSTGRES_BACKUP_DIR}" 30 " "; echo " : Chemin de stockage des backups"
+    echo -en "${CBLANC} --purge=${OLIX_MODULE_POSTGRES_BACKUP_PURGE} ${CVOID}"; stdout_strpad "--purge=${OLIX_MODULE_POSTGRES_BACKUP_PURGE}" 30 " "; echo " : Nombre de jours avant la purge des anciens backups"
+    echo -en "${CBLANC} --gz|--bz2 ${CVOID}"; stdout_strpad "--gz|--bz2" 30 " "; echo " : Compression du dump au format gzip ou bzip2"
+    echo -en "${CBLANC} --html ${CVOID}"; stdout_strpad "--html" 30 " "; echo " : Rapport au format HTML sinon au format TEXT par défaut"
+    echo -en "${CBLANC} --email=name@domain.ltd ${CVOID}"; stdout_strpad "--email=name@domain.ltd" 30 " "; echo " : Envoi du rapport à cette adresse"
     echo
     echo -e "${CJAUNE}Liste des BASES disponibles${CVOID} :"
     for I in $(module_postgres_getListDatabases); do
