@@ -46,6 +46,15 @@ olixmod_usage()
 olixmod_list()
 {
     logger_debug "module_postgres__olixmod_list ($@)"
+
+    config_loadConfigQuietModule "${OLIX_MODULE_NAME}"
+    if [[ $? -ne 0 ]]; then
+        echo -n ""
+        return 0
+    fi
+
+    source modules/postgres/lib/postgres.lib.sh
+    module_postgres_getListDatabases
 }
 
 
