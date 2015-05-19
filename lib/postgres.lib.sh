@@ -106,7 +106,31 @@ function module_postgres_dumpDatabase()
     if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
         pg_dump --verbose --format=c ${OPTS} --file=$2 $1
     else
-         pg_dump --format=c ${OPTS} --file=$2 $1 2> ${OLIX_LOGGER_FILE_ERR}
+        pg_dump --format=c ${OPTS} --file=$2 $1 2> ${OLIX_LOGGER_FILE_ERR}
+    fi
+    [[ $? -ne 0 ]] && return 1
+    return 0
+}
+
+
+###
+# Restaure un dump d'une base
+# @param $1  : Fichier de dump
+# @param $2  : Nom de la base
+# @param $3  : Host du serveur Postgres
+# @param $4  : Port du serveur
+# @param $5  : Utilisateur Postgres
+# @return bool
+##
+function module_postgres_restoreDatabase()
+{
+    local OPTS=$(module_postgres_getOptionsConnection $3 $4 $5)
+    logger_debug "module_postgres_restoreDatabase ($1, $2, ${OPTS})"
+
+    if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
+        pg_restore --verbose ${OPTS} --dbname=$2 $1
+    else
+        pg_restore ${OPTS} --dbname=$2 $1 2> ${OLIX_LOGGER_FILE_ERR}
     fi
     [[ $? -ne 0 ]] && return 1
     return 0

@@ -22,6 +22,10 @@ _olixsh_module()
             _olixsh_module_dump
             return 0
             ;;
+        restore)
+            _olixsh_module_restore
+            return 0
+            ;;
     esac
 }
 
@@ -33,7 +37,7 @@ _olixsh_module_actions()
 {
     local CUR ACTIONS
     CUR="${COMP_WORDS[COMP_CWORD]}"
-    ACTIONS="init dump help"
+    ACTIONS="init dump restore help"
 
     COMPREPLY=( $(compgen -W "${ACTIONS}" -- ${CUR}) )
 }
@@ -52,7 +56,7 @@ _olixsh_module_init()
 
 
 ###
-# Liste des packages de l'action DUMP du module MySQL
+# Liste des packages de l'action DUMP du module postgres
 ##
 _olixsh_module_dump()
 {
@@ -60,4 +64,16 @@ _olixsh_module_dump()
     CUR="${COMP_WORDS[COMP_CWORD]}"
 
     COMPREPLY=( $(compgen -W "$(${OLIX_ROOT_COMP}/olixsh postgres --list)" -- ${CUR}) )
+}
+
+
+###
+# Liste des packages de l'action RESTORE du module postgres
+##
+_olixsh_module_restore()
+{
+    local CUR BASES
+    CUR="${COMP_WORDS[COMP_CWORD]}"
+
+    COMPREPLY=( $(compgen -f -- ${CUR}) )
 }

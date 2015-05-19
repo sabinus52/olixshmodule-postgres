@@ -87,8 +87,6 @@ function module_postgres_action_init()
 
 ###
 # Fait un dump d'une base de données
-# @param $1 : Nom de la base
-# @param $2 : Nom du dump
 ##
 function module_postgres_action_dump()
 {
@@ -104,6 +102,27 @@ function module_postgres_action_dump()
     logger_info "Dump de la base '${OLIX_MODULE_POSTGRES_PARAM1}' vers le fichier '${OLIX_MODULE_POSTGRES_PARAM2}'"
     module_postgres_dumpDatabase ${OLIX_MODULE_POSTGRES_PARAM1} ${OLIX_MODULE_POSTGRES_PARAM2}
     [[ $? -ne 0 ]] && logger_error "Echec du dump de la base '${OLIX_MODULE_POSTGRES_PARAM1}' vers le fichier '${OLIX_MODULE_POSTGRES_PARAM2}'"
+
+    echo -e "${Cvert}Action terminée avec succès${CVOID}"
+}
+
+
+###
+# Fait une restauration d'un dump
+##
+function module_postgres_action_restore()
+{
+    logger_debug "module_postgres_action_restore ($@)"
+
+    # Affichage de l'aide
+    [ $# -lt 2 ] && module_postgres_usage_restore && core_exit 1
+
+    # Vérifie les paramètres
+    [[ ! -r ${OLIX_MODULE_POSTGRES_PARAM1} ]] && logger_error "Le fichier '${OLIX_MODULE_POSTGRES_PARAM1}' est absent ou inaccessible"
+    
+    logger_info "Restauration du dump '${OLIX_MODULE_POSTGRES_PARAM1}' vers la base '${OLIX_MODULE_POSTGRES_PARAM2}'"
+    module_postgres_restoreDatabase ${OLIX_MODULE_POSTGRES_PARAM1} ${OLIX_MODULE_POSTGRES_PARAM2}
+    [[ $? -ne 0 ]] && logger_error "Echec de la restauration du dump '${OLIX_MODULE_POSTGRES_PARAM1}' vers la base '${OLIX_MODULE_POSTGRES_PARAM2}'"
 
     echo -e "${Cvert}Action terminée avec succès${CVOID}"
 }
