@@ -17,7 +17,7 @@ function module_postgres_action_init()
     logger_debug "module_postgres_action_init ($@)"
 
     # Host
-    stdin_read "Host du serveur PostgreSQL (vide en mode socket)" "${OLIX_MODULE_POSTGRES_HOST}"
+    stdin_read "Host du serveur PostgreSQL (vide en mode Unix socket)" "${OLIX_MODULE_POSTGRES_HOST}"
     logger_debug "OLIX_MODULE_POSTGRES_HOST=${OLIX_STDIN_RETURN}"
     OLIX_MODULE_POSTGRES_HOST=${OLIX_STDIN_RETURN}
     
@@ -37,6 +37,12 @@ function module_postgres_action_init()
     stdin_readDoublePassword "Mot de passe du serveur PostgreSQL"
     logger_debug "OLIX_MODULE_POSTGRES_PASS=${OLIX_STDIN_RETURN}"
     OLIX_MODULE_POSTGRES_PASS=${OLIX_STDIN_RETURN}
+
+    # Emplacement de l'instance
+    [[ -z ${OLIX_MODULE_POSTGRES_PATH} ]] && OLIX_MODULE_POSTGRES_PATH=""
+    stdin_readDirectory "Chemin complet de l'instance PostgreSQL" "${OLIX_MODULE_POSTGRES_PATH}"
+    logger_debug "OLIX_MODULE_POSTGRES_PATH=${OLIX_STDIN_RETURN}"
+    OLIX_MODULE_POSTGRES_PATH=${OLIX_STDIN_RETURN}
 
     # Emplacement des dumps lors de la sauvegarde
     [[ -z ${OLIX_MODULE_POSTGRES_BACKUP_DIR} ]] && OLIX_MODULE_POSTGRES_BACKUP_DIR="/tmp"
@@ -75,6 +81,7 @@ function module_postgres_action_init()
     echo "OLIX_MODULE_POSTGRES_PORT=${OLIX_MODULE_POSTGRES_PORT}" >> ${OLIX_MODULE_FILECONF}
     echo "OLIX_MODULE_POSTGRES_USER=${OLIX_MODULE_POSTGRES_USER}" >> ${OLIX_MODULE_FILECONF}
     echo "OLIX_MODULE_POSTGRES_PASS=${OLIX_MODULE_POSTGRES_PASS}" >> ${OLIX_MODULE_FILECONF}
+    echo "OLIX_MODULE_POSTGRES_PATH=${OLIX_MODULE_POSTGRES_PATH}" >> ${OLIX_MODULE_FILECONF}
     echo "OLIX_MODULE_POSTGRES_BACKUP_DIR=${OLIX_MODULE_POSTGRES_BACKUP_DIR}" >> ${OLIX_MODULE_FILECONF}
     echo "OLIX_MODULE_POSTGRES_BACKUP_COMPRESS=${OLIX_MODULE_POSTGRES_BACKUP_COMPRESS}" >> ${OLIX_MODULE_FILECONF}
     echo "OLIX_MODULE_POSTGRES_BACKUP_PURGE=${OLIX_MODULE_POSTGRES_BACKUP_PURGE}" >> ${OLIX_MODULE_FILECONF}
@@ -219,3 +226,68 @@ function module_postgres_action_backup()
         report_terminate "Rapport de backups des bases du serveur ${HOSTNAME}"
     fi
 }
+
+
+
+###
+# Fait un backup des WAL en mode PITR
+##
+function module_postgres_action_bckwal()
+{
+    logger_debug "module_postgres_action_bckwal ($@)"
+    local IS_ERROR=false
+    local RET
+
+    if [[ ! -d ${OLIX_MODULE_POSTGRES_BACKUP_DIR} ]]; then
+        logger_warning "Création du dossier inexistant OLIX_MODULE_POSTGRES_BACKUP_DIR: \"${OLIX_MODULE_POSTGRES_BACKUP_DIR}\""
+        mkdir ${OLIX_MODULE_POSTGRES_BACKUP_DIR} || logger_error "Impossible de créer OLIX_MODULE_POSTGRES_BACKUP_DIR: \"${OLIX_MODULE_POSTGRES_BACKUP_DIR}\""
+    elif [[ ! -w ${OLIX_MODULE_POSTGRES_BACKUP_DIR} ]]; then
+        logger_error "Le dossier '${OLIX_MODULE_POSTGRES_BACKUP_DIR}' n'a pas les droits en écriture"
+    fi
+
+    source lib/backup.lib.sh
+    source lib/report.lib.sh
+
+    # Mise en place du rapport
+    report_initialize "${OLIX_MODULE_POSTGRES_BACKUP_REPORT}" \
+                      "${OLIX_MODULE_POSTGRES_BACKUP_DIR}" "rapport-pgwals-${OLIX_SYSTEM_DATE}" \
+                      "${OLIX_MODULE_POSTGRES_BACKUP_EMAIL}"
+    stdout_printHead1 "Sauvegarde à chaud de l'instance PostgreSQL %s le %s à %s" "${HOSTNAME}" "${OLIX_SYSTEM_DATE}" "${OLIX_SYSTEM_TIME}"
+    report_printHead1 "Sauvegarde à chaud de l'instance PostgreSQL %s le %s à %s" "${HOSTNAME}" "${OLIX_SYSTEM_DATE}" "${OLIX_SYSTEM_TIME}"
+
+    # PITR de début
+    logger_info "Signalisation à Postgres du début de la sauvegarde"
+    module_postgres_execSQL "SELECT pg_start_backup('archivelog');"
+    stdout_printMessageReturn $? "Signalisation à Postgres du début de la sauvegarde" "" "$((SECONDS-START))"
+    report_printMessageReturn $? "Signalisation à Postgres du début de la sauvegarde" "" "$((SECONDS-START))"
+    [[ $? -ne 0 ]] && report_warning && logger_warning2 && IS_ERROR=true
+
+    # Sauvegarde des objets globaux
+    local BACKUP="${OLIX_MODULE_POSTGRES_BACKUP_DIR}/backup-pgwals-${OLIX_SYSTEM_DATE}.tar"
+    logger_info "Création de l'archive -> ${BACKUP}"
+    file_makeArchive "${OLIX_MODULE_POSTGRES_PATH}" "${BACKUP}" "" "--ignore-failed-read"
+    RET=$?
+    [[ ${RET} -eq 1 ]] && report_warning && logger_warning2 && RET=0
+    stdout_printMessageReturn ${RET} "Sauvegarde des fichiers de l'instance" "$(filesystem_getSizeFileHuman ${BACKUP})" "$((SECONDS-START))"
+    report_printMessageReturn ${RET} "Sauvegarde des fichiers de l'instance" "$(filesystem_getSizeFileHuman ${BACKUP})" "$((SECONDS-START))"
+    [[ ${RET} -ne 0 ]] && report_warning && logger_warning2 && IS_ERROR=true
+    backup_finalize "${BACKUP}" "${OLIX_MODULE_POSTGRES_BACKUP_DIR}" "${OLIX_MODULE_POSTGRES_BACKUP_COMPRESS}" "${OLIX_MODULE_POSTGRES_BACKUP_PURGE}" "backup-pgwals-*" false
+    [[ $? -ne 0 ]] && IS_ERROR=true
+
+    # PITR de fin
+    logger_info "Signalisation à Postgres de la fin de la sauvegarde"
+    module_postgres_execSQL "SELECT pg_stop_backup();"
+    stdout_printMessageReturn $? "Signalisation à Postgres de la fin de la sauvegarde" "" "$((SECONDS-START))"
+    report_printMessageReturn $? "Signalisation à Postgres de la fin de la sauvegarde" "" "$((SECONDS-START))"
+    [[ $? -ne 0 ]] && report_warning && logger_warning2 && IS_ERROR=true
+
+    stdout_print; stdout_printLine; stdout_print "${Cvert}Sauvegarde terminée en $(core_getTimeExec) secondes${CVOID}"
+    report_print; report_printLine; report_print "Sauvegarde terminée en $(core_getTimeExec) secondes"
+
+    if [[ ${IS_ERROR} == true ]]; then
+        report_terminate "ERREUR - Rapport de backup à chaud du serveur PostgreSQL ${HOSTNAME}"
+    else
+        report_terminate "Rapport de backup à chaud du serveur PostgreSQL ${HOSTNAME}"
+    fi
+}
+

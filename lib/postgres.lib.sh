@@ -52,6 +52,29 @@ function module_postgres_isBaseExists()
 
 
 ###
+# Execute une requete
+# @apram $1 : Requete
+# @param $2 : Host du serveur Postgres
+# @param $3 : Port du serveur
+# @param $4 : Utilisateur postgres
+# @return : Liste
+##
+function module_postgres_execSQL()
+{
+    local OPTS=$(module_postgres_getOptionsConnection "$2" "$3" "$4")
+    logger_debug "module_postgres_getListDatabases (${OPTS})"
+
+    if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
+        psql ${OPTS} --command="$1" 2> ${OLIX_LOGGER_FILE_ERR}
+    else
+        psql ${OPTS} --command="$1" > /dev/null 2> ${OLIX_LOGGER_FILE_ERR}
+    fi
+    [[ $? -ne 0 ]] && return 1
+    return 0
+}
+
+
+###
 # Retroune la liste des bases de données
 # @param $1 : Host du serveur Postgres
 # @param $2 : Port du serveur

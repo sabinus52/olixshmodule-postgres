@@ -26,6 +26,7 @@ function module_postgres_usage_main()
     echo -e "${Cjaune} restore ${CVOID}  : Restauration d'une base de données"
     echo -e "${Cjaune} sync    ${CVOID}  : Synchronisation d'une base à partir d'un serveur distant"
     echo -e "${Cjaune} backup  ${CVOID}  : Réalisation d'une sauvegarde des bases Postgres avec rapport pour tâches planifiées"
+    echo -e "${Cjaune} bckwal  ${CVOID}  : Sauvegarde à chaud en mode PITR de l'instance Postgres avec rapport pour tâches planifiées"
     echo -e "${Cjaune} help    ${CVOID}  : Affiche cet écran"
 }
 
@@ -131,6 +132,24 @@ function module_postgres_usage_backup()
         stdout_strpad "${I}" 20 " "
         echo " : Base de de données ${I}"
     done
+}
+
+
+###
+# Usage de l'action BCKWAL
+##
+function module_postgres_usage_bckwal()
+{
+    logger_debug "module_postgres_usage_bckwal ()"
+    stdout_printVersion
+    echo
+    echo -e "Sauvegarde à chaud en mode PITR de l'instance PostgreSQL avec rapport pour tâches planifiées"
+    echo
+    echo -e "${CBLANC} Usage : ${CVIOLET}$(basename ${OLIX_ROOT_SCRIPT}) ${CVERT}postgres ${CJAUNE}bckwal${CVOID} ${CBLANC}[OPTIONS]${CVOID}"
+    echo
+    echo -e "${Ccyan}OPTIONS${CVOID}"
+    echo -en "${CBLANC} --port=${OLIX_MODULE_POSTGRES_PORT} ${CVOID}"; stdout_strpad "${OLIX_MODULE_POSTGRES_PORT}" 13 " "; echo " : Port du serveur POSTGRES"
+    echo -en "${CBLANC} --user=${OLIX_MODULE_POSTGRES_USER} ${CVOID}"; stdout_strpad "${OLIX_MODULE_POSTGRES_USER}" 13 " "; echo " : User du serveur POSTGRES"
 }
 
 
