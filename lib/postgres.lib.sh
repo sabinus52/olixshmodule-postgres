@@ -246,10 +246,8 @@ function module_postgres_backupDatabase()
     local FTP_PATH=$9
 
     stdout_printHead2 "Dump de la base Postgres %s" "${BASE}"
-    report_printHead2 "Dump de la base Postgres %s" "${BASE}"
 
     if ! module_postgres_isBaseExists "${BASE}"; then
-        report_warning "La base '${BASE}' n'existe pas"
         logger_warning "La base '${BASE}' n'existe pas"
         return 1
     fi
@@ -261,8 +259,7 @@ function module_postgres_backupDatabase()
 
     module_postgres_dumpDatabase "${BASE}" "${DUMP}"
     stdout_printMessageReturn $? "Sauvegarde de la base" "$(filesystem_getSizeFileHuman ${DUMP})" "$((SECONDS-START))"
-    report_printMessageReturn $? "Sauvegarde de la base" "$(filesystem_getSizeFileHuman ${DUMP})" "$((SECONDS-START))"
-    [[ $? -ne 0 ]] && report_warning && logger_warning2 && return 1
+    [[ $? -ne 0 ]] && logger_warning && return 1
 
     backup_finalize "${DUMP}" "${DIRBCK}" "${COMPRESS}" "${PURGE}" "dump-${BASE}-*" \
         "${FTP}" "${FTP_HOST}" "${FTP_USER}" "${FTP_PASS}" "${FTP_PATH}"

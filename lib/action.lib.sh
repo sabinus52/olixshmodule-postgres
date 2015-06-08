@@ -197,14 +197,12 @@ function module_postgres_action_backup()
                       "${OLIX_MODULE_POSTGRES_BACKUP_DIR}" "rapport-dump-postgres-${OLIX_SYSTEM_DATE}" \
                       "${OLIX_MODULE_POSTGRES_BACKUP_EMAIL}"
     stdout_printHead1 "Sauvegarde des bases PostgreSQL %s le %s à %s" "${HOSTNAME}" "${OLIX_SYSTEM_DATE}" "${OLIX_SYSTEM_TIME}"
-    report_printHead1 "Sauvegarde des bases PostgreSQL %s le %s à %s" "${HOSTNAME}" "${OLIX_SYSTEM_DATE}" "${OLIX_SYSTEM_TIME}"
 
     # Sauvegarde des objets globaux
     local PGGLOBAL="${OLIX_MODULE_POSTGRES_BACKUP_DIR}/pg-global-${OLIX_SYSTEM_DATE}.sql"
     logger_info "Sauvegarde des objects globaux de l'instance -> ${PGGLOBAL}"
     module_postgres_dumpOnlyGlobalObjects "${PGGLOBAL}"
     stdout_printMessageReturn $? "Sauvegarde des objects globaux" "$(filesystem_getSizeFileHuman ${PGGLOBAL})" "$((SECONDS-START))"
-    report_printMessageReturn $? "Sauvegarde des objects globaux" "$(filesystem_getSizeFileHuman ${PGGLOBAL})" "$((SECONDS-START))"
     [[ $? -ne 0 ]] && report_warning && logger_warning2 && IS_ERROR=true
     backup_finalize "${PGGLOBAL}" "${OLIX_MODULE_POSTGRES_BACKUP_DIR}" "${OLIX_MODULE_POSTGRES_BACKUP_COMPRESS}" "${OLIX_MODULE_POSTGRES_BACKUP_PURGE}" "pg-global-*" false
     [[ $? -ne 0 ]] && IS_ERROR=true
@@ -217,8 +215,7 @@ function module_postgres_action_backup()
         [[ $? -ne 0 ]] && IS_ERROR=true
     done
 
-    stdout_print; stdout_printLine; stdout_print "${Cvert}Sauvegarde terminée en $(core_getTimeExec) secondes${CVOID}"
-    report_print; report_printLine; report_print "Sauvegarde terminée en $(core_getTimeExec) secondes"
+    stdout_print; stdout_printLine; stdout_print "Sauvegarde terminée en $(core_getTimeExec) secondes" "${Cvert}"
 
     if [[ ${IS_ERROR} == true ]]; then
         report_terminate "ERREUR - Rapport de backups des bases du serveur ${HOSTNAME}"
@@ -253,24 +250,21 @@ function module_postgres_action_bckwal()
                       "${OLIX_MODULE_POSTGRES_BACKUP_DIR}" "rapport-pgwals-${OLIX_SYSTEM_DATE}" \
                       "${OLIX_MODULE_POSTGRES_BACKUP_EMAIL}"
     stdout_printHead1 "Sauvegarde à chaud de l'instance PostgreSQL %s le %s à %s" "${HOSTNAME}" "${OLIX_SYSTEM_DATE}" "${OLIX_SYSTEM_TIME}"
-    report_printHead1 "Sauvegarde à chaud de l'instance PostgreSQL %s le %s à %s" "${HOSTNAME}" "${OLIX_SYSTEM_DATE}" "${OLIX_SYSTEM_TIME}"
 
     # PITR de début
     logger_info "Signalisation à Postgres du début de la sauvegarde"
     module_postgres_execSQL "SELECT pg_start_backup('archivelog');"
     stdout_printMessageReturn $? "Signalisation à Postgres du début de la sauvegarde" "" "$((SECONDS-START))"
-    report_printMessageReturn $? "Signalisation à Postgres du début de la sauvegarde" "" "$((SECONDS-START))"
-    [[ $? -ne 0 ]] && report_warning && logger_warning2 && IS_ERROR=true
+    [[ $? -ne 0 ]] && logger_warning && IS_ERROR=true
 
     # Sauvegarde des objets globaux
     local BACKUP="${OLIX_MODULE_POSTGRES_BACKUP_DIR}/backup-pgwals-${OLIX_SYSTEM_DATE}.tar"
     logger_info "Création de l'archive -> ${BACKUP}"
     file_makeArchive "${OLIX_MODULE_POSTGRES_PATH}" "${BACKUP}" "" "--ignore-failed-read"
     RET=$?
-    [[ ${RET} -eq 1 ]] && report_warning && logger_warning2 && RET=0
+    [[ ${RET} -eq 1 ]] && logger_warning && RET=0
     stdout_printMessageReturn ${RET} "Sauvegarde des fichiers de l'instance" "$(filesystem_getSizeFileHuman ${BACKUP})" "$((SECONDS-START))"
-    report_printMessageReturn ${RET} "Sauvegarde des fichiers de l'instance" "$(filesystem_getSizeFileHuman ${BACKUP})" "$((SECONDS-START))"
-    [[ ${RET} -ne 0 ]] && report_warning && logger_warning2 && IS_ERROR=true
+    [[ ${RET} -ne 0 ]] && logger_warning && IS_ERROR=true
     backup_finalize "${BACKUP}" "${OLIX_MODULE_POSTGRES_BACKUP_DIR}" "${OLIX_MODULE_POSTGRES_BACKUP_COMPRESS}" "${OLIX_MODULE_POSTGRES_BACKUP_PURGE}" "backup-pgwals-*" false
     [[ $? -ne 0 ]] && IS_ERROR=true
 
@@ -278,11 +272,9 @@ function module_postgres_action_bckwal()
     logger_info "Signalisation à Postgres de la fin de la sauvegarde"
     module_postgres_execSQL "SELECT pg_stop_backup();"
     stdout_printMessageReturn $? "Signalisation à Postgres de la fin de la sauvegarde" "" "$((SECONDS-START))"
-    report_printMessageReturn $? "Signalisation à Postgres de la fin de la sauvegarde" "" "$((SECONDS-START))"
-    [[ $? -ne 0 ]] && report_warning && logger_warning2 && IS_ERROR=true
+    [[ $? -ne 0 ]] && logger_warning && IS_ERROR=true
 
-    stdout_print; stdout_printLine; stdout_print "${Cvert}Sauvegarde terminée en $(core_getTimeExec) secondes${CVOID}"
-    report_print; report_printLine; report_print "Sauvegarde terminée en $(core_getTimeExec) secondes"
+    stdout_print; stdout_printLine; stdout_print "Sauvegarde terminée en $(core_getTimeExec) secondes" "${Cvert}"
 
     if [[ ${IS_ERROR} == true ]]; then
         report_terminate "ERREUR - Rapport de backup à chaud du serveur PostgreSQL ${HOSTNAME}"
