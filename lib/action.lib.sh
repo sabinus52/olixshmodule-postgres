@@ -44,7 +44,7 @@ function module_postgres_action_init()
     # Ecriture du fichier de configuration
     logger_info "Création du fichier de configuration ${OLIX_MODULE_FILECONF}"
     echo "# Fichier de configuration du module POSTGRES" > ${OLIX_MODULE_FILECONF} 2> ${OLIX_LOGGER_FILE_ERR}
-    [[ $? -ne 0 ]] && logger_error
+    [[ $? -ne 0 ]] && logger_critical
     echo "OLIX_MODULE_POSTGRES_HOST=${OLIX_MODULE_POSTGRES_HOST}" >> ${OLIX_MODULE_FILECONF}
     echo "OLIX_MODULE_POSTGRES_PORT=${OLIX_MODULE_POSTGRES_PORT}" >> ${OLIX_MODULE_FILECONF}
     echo "OLIX_MODULE_POSTGRES_USER=${OLIX_MODULE_POSTGRES_USER}" >> ${OLIX_MODULE_FILECONF}
@@ -67,11 +67,11 @@ function module_postgres_action_dump()
 
     # Vérifie les paramètres
     filesystem_isCreateFile "${OLIX_MODULE_POSTGRES_PARAM2}"
-    [[ $? -ne 0 ]] && logger_error "Impossible de créer le fichier '${OLIX_MODULE_POSTGRES_PARAM2}'"
+    [[ $? -ne 0 ]] && logger_critical "Impossible de créer le fichier '${OLIX_MODULE_POSTGRES_PARAM2}'"
     
     logger_info "Dump de la base '${OLIX_MODULE_POSTGRES_PARAM1}' vers le fichier '${OLIX_MODULE_POSTGRES_PARAM2}'"
     module_postgres_dumpDatabase ${OLIX_MODULE_POSTGRES_PARAM1} ${OLIX_MODULE_POSTGRES_PARAM2}
-    [[ $? -ne 0 ]] && logger_error "Echec du dump de la base '${OLIX_MODULE_POSTGRES_PARAM1}' vers le fichier '${OLIX_MODULE_POSTGRES_PARAM2}'"
+    [[ $? -ne 0 ]] && logger_critical "Echec du dump de la base '${OLIX_MODULE_POSTGRES_PARAM1}' vers le fichier '${OLIX_MODULE_POSTGRES_PARAM2}'"
 
     echo -e "${Cvert}Action terminée avec succès${CVOID}"
 }
@@ -88,11 +88,11 @@ function module_postgres_action_restore()
     [ $# -lt 2 ] && module_postgres_usage_restore && core_exit 1
 
     # Vérifie les paramètres
-    [[ ! -r ${OLIX_MODULE_POSTGRES_PARAM1} ]] && logger_error "Le fichier '${OLIX_MODULE_POSTGRES_PARAM1}' est absent ou inaccessible"
+    [[ ! -r ${OLIX_MODULE_POSTGRES_PARAM1} ]] && logger_critical "Le fichier '${OLIX_MODULE_POSTGRES_PARAM1}' est absent ou inaccessible"
     
     logger_info "Restauration du dump '${OLIX_MODULE_POSTGRES_PARAM1}' vers la base '${OLIX_MODULE_POSTGRES_PARAM2}'"
     module_postgres_restoreDatabase ${OLIX_MODULE_POSTGRES_PARAM1} ${OLIX_MODULE_POSTGRES_PARAM2}
-    [[ $? -ne 0 ]] && logger_error "Echec de la restauration du dump '${OLIX_MODULE_POSTGRES_PARAM1}' vers la base '${OLIX_MODULE_POSTGRES_PARAM2}'"
+    [[ $? -ne 0 ]] && logger_critical "Echec de la restauration du dump '${OLIX_MODULE_POSTGRES_PARAM1}' vers la base '${OLIX_MODULE_POSTGRES_PARAM2}'"
 
     echo -e "${Cvert}Action terminée avec succès${CVOID}"
 }
@@ -110,7 +110,7 @@ function module_postgres_action_sync()
     [ $# -lt 1 ] && module_postgres_usage_sync && core_exit 1
 
     module_postgres_isBaseExists "${OLIX_MODULE_POSTGRES_PARAM1}"
-    [[ $? -ne 0 ]] && logger_error "La base '${OLIX_MODULE_POSTGRES_PARAM1}' n'existe pas"
+    [[ $? -ne 0 ]] && logger_critical "La base '${OLIX_MODULE_POSTGRES_PARAM1}' n'existe pas"
 
     # Demande des infos de connexion à la base distante
     stdin_readConnexionServer "" "5432" "postgres"
@@ -126,7 +126,7 @@ function module_postgres_action_sync()
             "${OLIX_MODULE_POSTGRES_PARAM2}" \
             "--host=${OLIX_MODULE_POSTGRES_HOST} --port=${OLIX_MODULE_POSTGRES_PORT} --username=${OLIX_MODULE_POSTGRES_USER}" \
             "${OLIX_MODULE_POSTGRES_PARAM1}"
-        [[ $? -ne 0 ]] && logger_error "Echec de la synchronisation de '${OLIX_STDIN_RETURN_HOST}:${OLIX_MODULE_POSTGRES_PARAM2}' vers '${OLIX_MODULE_POSTGRES_PARAM1}'"
+        [[ $? -ne 0 ]] && logger_critical "Echec de la synchronisation de '${OLIX_STDIN_RETURN_HOST}:${OLIX_MODULE_POSTGRES_PARAM2}' vers '${OLIX_MODULE_POSTGRES_PARAM1}'"
         echo -e "${Cvert}Action terminée avec succès${CVOID}"
     fi
 }
@@ -147,9 +147,9 @@ function module_postgres_action_backup()
     fi
     if [[ ! -d ${OLIX_MODULE_POSTGRES_BACKUP_DIR} ]]; then
         logger_warning "Création du dossier inexistant OLIX_MODULE_POSTGRES_BACKUP_DIR: \"${OLIX_MODULE_POSTGRES_BACKUP_DIR}\""
-        mkdir ${OLIX_MODULE_POSTGRES_BACKUP_DIR} || logger_error "Impossible de créer OLIX_MODULE_POSTGRES_BACKUP_DIR: \"${OLIX_MODULE_POSTGRES_BACKUP_DIR}\""
+        mkdir ${OLIX_MODULE_POSTGRES_BACKUP_DIR} || logger_critical "Impossible de créer OLIX_MODULE_POSTGRES_BACKUP_DIR: \"${OLIX_MODULE_POSTGRES_BACKUP_DIR}\""
     elif [[ ! -w ${OLIX_MODULE_POSTGRES_BACKUP_DIR} ]]; then
-        logger_error "Le dossier '${OLIX_MODULE_POSTGRES_BACKUP_DIR}' n'a pas les droits en écriture"
+        logger_critical "Le dossier '${OLIX_MODULE_POSTGRES_BACKUP_DIR}' n'a pas les droits en écriture"
     fi
 
     source lib/backup.lib.sh
@@ -166,7 +166,7 @@ function module_postgres_action_backup()
     logger_info "Sauvegarde des objects globaux de l'instance -> ${PGGLOBAL}"
     module_postgres_dumpOnlyGlobalObjects "${PGGLOBAL}"
     stdout_printMessageReturn $? "Sauvegarde des objects globaux" "$(filesystem_getSizeFileHuman ${PGGLOBAL})" "$((SECONDS-START))"
-    [[ $? -ne 0 ]] && logger_warning && IS_ERROR=true
+    [[ $? -ne 0 ]] && logger_error && IS_ERROR=true
     backup_finalize "${PGGLOBAL}" "${OLIX_MODULE_POSTGRES_BACKUP_DIR}" "${OLIX_MODULE_POSTGRES_BACKUP_COMPRESS}" "${OLIX_MODULE_POSTGRES_BACKUP_PURGE}" "pg-global-*" false
     [[ $? -ne 0 ]] && IS_ERROR=true
 
@@ -200,9 +200,9 @@ function module_postgres_action_bckwal()
 
     if [[ ! -d ${OLIX_MODULE_POSTGRES_BACKUP_DIR} ]]; then
         logger_warning "Création du dossier inexistant OLIX_MODULE_POSTGRES_BACKUP_DIR: \"${OLIX_MODULE_POSTGRES_BACKUP_DIR}\""
-        mkdir ${OLIX_MODULE_POSTGRES_BACKUP_DIR} || logger_error "Impossible de créer OLIX_MODULE_POSTGRES_BACKUP_DIR: \"${OLIX_MODULE_POSTGRES_BACKUP_DIR}\""
+        mkdir ${OLIX_MODULE_POSTGRES_BACKUP_DIR} || logger_critical "Impossible de créer OLIX_MODULE_POSTGRES_BACKUP_DIR: \"${OLIX_MODULE_POSTGRES_BACKUP_DIR}\""
     elif [[ ! -w ${OLIX_MODULE_POSTGRES_BACKUP_DIR} ]]; then
-        logger_error "Le dossier '${OLIX_MODULE_POSTGRES_BACKUP_DIR}' n'a pas les droits en écriture"
+        logger_critical "Le dossier '${OLIX_MODULE_POSTGRES_BACKUP_DIR}' n'a pas les droits en écriture"
     fi
 
     source lib/backup.lib.sh
@@ -218,7 +218,7 @@ function module_postgres_action_bckwal()
     logger_info "Signalisation à Postgres du début de la sauvegarde"
     module_postgres_execSQL "SELECT pg_start_backup('archivelog');"
     stdout_printMessageReturn $? "Signalisation à Postgres du début de la sauvegarde" "" "$((SECONDS-START))"
-    [[ $? -ne 0 ]] && logger_warning && IS_ERROR=true
+    [[ $? -ne 0 ]] && logger_error && IS_ERROR=true
 
     # Sauvegarde des objets globaux
     local BACKUP="${OLIX_MODULE_POSTGRES_BACKUP_DIR}/backup-pgwals-${OLIX_SYSTEM_DATE}.tar"
@@ -227,7 +227,7 @@ function module_postgres_action_bckwal()
     RET=$?
     [[ ${RET} -eq 1 ]] && logger_warning && RET=0
     stdout_printMessageReturn ${RET} "Sauvegarde des fichiers de l'instance" "$(filesystem_getSizeFileHuman ${BACKUP})" "$((SECONDS-START))"
-    [[ ${RET} -ne 0 ]] && logger_warning && IS_ERROR=true
+    [[ ${RET} -ne 0 ]] && logger_error && IS_ERROR=true
     backup_finalize "${BACKUP}" "${OLIX_MODULE_POSTGRES_BACKUP_DIR}" "${OLIX_MODULE_POSTGRES_BACKUP_COMPRESS}" "${OLIX_MODULE_POSTGRES_BACKUP_PURGE}" "backup-pgwals-*" false
     [[ $? -ne 0 ]] && IS_ERROR=true
 
@@ -235,7 +235,7 @@ function module_postgres_action_bckwal()
     logger_info "Signalisation à Postgres de la fin de la sauvegarde"
     module_postgres_execSQL "SELECT pg_stop_backup();"
     stdout_printMessageReturn $? "Signalisation à Postgres de la fin de la sauvegarde" "" "$((SECONDS-START))"
-    [[ $? -ne 0 ]] && logger_warning && IS_ERROR=true
+    [[ $? -ne 0 ]] && logger_error && IS_ERROR=true
 
     stdout_print; stdout_printLine; stdout_print "Sauvegarde terminée en $(core_getTimeExec) secondes" "${Cvert}"
 
