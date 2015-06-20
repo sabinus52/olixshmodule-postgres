@@ -203,7 +203,7 @@ function module_postgres_action_backup()
     logger_info "Sauvegarde des objects globaux de l'instance -> ${PGGLOBAL}"
     module_postgres_dumpOnlyGlobalObjects "${PGGLOBAL}"
     stdout_printMessageReturn $? "Sauvegarde des objects globaux" "$(filesystem_getSizeFileHuman ${PGGLOBAL})" "$((SECONDS-START))"
-    [[ $? -ne 0 ]] && report_warning && logger_warning2 && IS_ERROR=true
+    [[ $? -ne 0 ]] && logger_warning && IS_ERROR=true
     backup_finalize "${PGGLOBAL}" "${OLIX_MODULE_POSTGRES_BACKUP_DIR}" "${OLIX_MODULE_POSTGRES_BACKUP_COMPRESS}" "${OLIX_MODULE_POSTGRES_BACKUP_PURGE}" "pg-global-*" false
     [[ $? -ne 0 ]] && IS_ERROR=true
 
