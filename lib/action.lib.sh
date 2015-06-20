@@ -22,56 +22,24 @@ function module_postgres_action_init()
     OLIX_MODULE_POSTGRES_HOST=${OLIX_STDIN_RETURN}
     
     # Port
-    [[ -z ${OLIX_MODULE_POSTGRES_PORT} ]] && OLIX_MODULE_POSTGRES_PORT="5432"
     stdin_read "Host du serveur PostgreSQL" "${OLIX_MODULE_POSTGRES_PORT}"
     logger_debug "OLIX_MODULE_POSTGRES_PORT=${OLIX_STDIN_RETURN}"
     OLIX_MODULE_POSTGRES_PORT=${OLIX_STDIN_RETURN}
     
     # Utilisateur
-    [[ -z ${OLIX_MODULE_POSTGRES_USER} ]] && OLIX_MODULE_POSTGRES_USER=postgres
     stdin_read "Utilisateur de la base PostgreSQL" "${OLIX_MODULE_POSTGRES_USER}"
     logger_debug "OLIX_MODULE_POSTGRES_USER=${OLIX_STDIN_RETURN}"
     OLIX_MODULE_POSTGRES_USER=${OLIX_STDIN_RETURN}
 
     # Mot de passe
-    stdin_readDoublePassword "Mot de passe du serveur PostgreSQL"
+    stdin_readPassword "Mot de passe du serveur PostgreSQL"
     logger_debug "OLIX_MODULE_POSTGRES_PASS=${OLIX_STDIN_RETURN}"
     OLIX_MODULE_POSTGRES_PASS=${OLIX_STDIN_RETURN}
 
     # Emplacement de l'instance
-    [[ -z ${OLIX_MODULE_POSTGRES_PATH} ]] && OLIX_MODULE_POSTGRES_PATH=""
-    stdin_readDirectory "Chemin complet de l'instance PostgreSQL" "${OLIX_MODULE_POSTGRES_PATH}"
+    stdin_readDirectory "Chemin complet de l'instance PostgreSQL" "${OLIX_MODULE_POSTGRES_PATH}" false
     logger_debug "OLIX_MODULE_POSTGRES_PATH=${OLIX_STDIN_RETURN}"
     OLIX_MODULE_POSTGRES_PATH=${OLIX_STDIN_RETURN}
-
-    # Emplacement des dumps lors de la sauvegarde
-    [[ -z ${OLIX_MODULE_POSTGRES_BACKUP_DIR} ]] && OLIX_MODULE_POSTGRES_BACKUP_DIR="/tmp"
-    stdin_readDirectory "Chemin complet des dumps de sauvegarde" "${OLIX_MODULE_POSTGRES_BACKUP_DIR}"
-    logger_debug "OLIX_MODULE_POSTGRES_BACKUP_DIR=${OLIX_STDIN_RETURN}"
-    OLIX_MODULE_POSTGRES_BACKUP_DIR=${OLIX_STDIN_RETURN}
-
-    # Format de compression
-    [[ -z ${OLIX_MODULE_POSTGRES_BACKUP_COMPRESS} ]] && OLIX_MODULE_POSTGRES_BACKUP_COMPRESS="GZ"
-    stdin_readSelect "Format de compression des dumps (NULL pour sans compression)" "NULL null GZ gz BZ2 bz2" "${OLIX_MODULE_POSTGRES_BACKUP_COMPRESS}"
-    logger_debug "OLIX_MODULE_POSTGRES_BACKUP_COMPRESS=${OLIX_STDIN_RETURN}"
-    OLIX_MODULE_POSTGRES_BACKUP_COMPRESS=${OLIX_STDIN_RETURN}
-
-    # Nombre de jours de retention de la sauvegarde
-    [[ -z ${OLIX_MODULE_POSTGRES_BACKUP_PURGE} ]] && OLIX_MODULE_POSTGRES_BACKUP_PURGE="5"
-    stdin_readSelect "Retention des dumps de sauvegarde" "LOG log 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31" "${OLIX_MODULE_POSTGRES_BACKUP_PURGE}"
-    logger_debug "OLIX_MODULE_POSTGRES_BACKUP_PURGE=${OLIX_STDIN_RETURN}"
-    OLIX_MODULE_POSTGRES_BACKUP_PURGE=${OLIX_STDIN_RETURN}
-
-    # Format du rapport
-    [[ -z ${OLIX_MODULE_POSTGRES_BACKUP_REPORT} ]] && OLIX_MODULE_POSTGRES_BACKUP_REPORT="TEXT"
-    stdin_readSelect "Format des rapports de sauvegarde" "TEXT text HTML html" "${OLIX_MODULE_POSTGRES_BACKUP_REPORT}"
-    logger_debug "OLIX_MODULE_POSTGRES_BACKUP_REPORT=${OLIX_STDIN_RETURN}"
-    OLIX_MODULE_POSTGRES_BACKUP_REPORT=${OLIX_STDIN_RETURN}
-
-    # Email d'envoi de rapport
-    stdin_read "Email d'envoi du rapport" "${OLIX_MODULE_POSTGRES_BACKUP_EMAIL}"
-    logger_debug "OLIX_MODULE_POSTGRES_BACKUP_EMAIL=${OLIX_STDIN_RETURN}"
-    OLIX_MODULE_POSTGRES_BACKUP_EMAIL=${OLIX_STDIN_RETURN}
 
     # Ecriture du fichier de configuration
     logger_info "Création du fichier de configuration ${OLIX_MODULE_FILECONF}"
@@ -82,11 +50,6 @@ function module_postgres_action_init()
     echo "OLIX_MODULE_POSTGRES_USER=${OLIX_MODULE_POSTGRES_USER}" >> ${OLIX_MODULE_FILECONF}
     echo "OLIX_MODULE_POSTGRES_PASS=${OLIX_MODULE_POSTGRES_PASS}" >> ${OLIX_MODULE_FILECONF}
     echo "OLIX_MODULE_POSTGRES_PATH=${OLIX_MODULE_POSTGRES_PATH}" >> ${OLIX_MODULE_FILECONF}
-    echo "OLIX_MODULE_POSTGRES_BACKUP_DIR=${OLIX_MODULE_POSTGRES_BACKUP_DIR}" >> ${OLIX_MODULE_FILECONF}
-    echo "OLIX_MODULE_POSTGRES_BACKUP_COMPRESS=${OLIX_MODULE_POSTGRES_BACKUP_COMPRESS}" >> ${OLIX_MODULE_FILECONF}
-    echo "OLIX_MODULE_POSTGRES_BACKUP_PURGE=${OLIX_MODULE_POSTGRES_BACKUP_PURGE}" >> ${OLIX_MODULE_FILECONF}
-    echo "OLIX_MODULE_POSTGRES_BACKUP_REPORT=${OLIX_MODULE_POSTGRES_BACKUP_REPORT}" >> ${OLIX_MODULE_FILECONF}
-    echo "OLIX_MODULE_POSTGRES_BACKUP_EMAIL=${OLIX_MODULE_POSTGRES_BACKUP_EMAIL}" >> ${OLIX_MODULE_FILECONF}
 
     echo -e "${Cvert}Action terminée avec succès${CVOID}"
 }
