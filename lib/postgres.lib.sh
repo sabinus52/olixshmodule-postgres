@@ -52,17 +52,40 @@ function module_postgres_isBaseExists()
 
 
 ###
+# Test une connexion au serveur de base de données
+# @param $1  : Host du serveur Postgres
+# @param $2  : Port du serveur
+# @param $4  : Utilisateur mysql
+# @param $4  : Mot de passe
+# @return bool
+##
+function module_postgres_checkConnect()
+{
+    local OPTS=$(module_postgres_getOptionsConnection "$1" "$2" "$3")
+    logger_debug "module_postgres_checkConnect (${OPTS})"
+    module_postgres_setPassword "$4"
+
+    psql ${OPTS} --no-password --command="\d" postgres > /dev/null
+    [[ $? -ne 0 ]] && return 1
+
+    return 0
+}
+
+
+###
 # Execute une requete
 # @apram $1 : Requete
 # @param $2 : Host du serveur Postgres
 # @param $3 : Port du serveur
 # @param $4 : Utilisateur postgres
+# @param $5  : Mot de passe
 # @return : Liste
 ##
 function module_postgres_execSQL()
 {
     local OPTS=$(module_postgres_getOptionsConnection "$2" "$3" "$4")
     logger_debug "module_postgres_getListDatabases (${OPTS})"
+    module_postgres_setPassword "$5"
 
     if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
         psql ${OPTS} --command="$1" 2> ${OLIX_LOGGER_FILE_ERR}
@@ -84,8 +107,9 @@ function module_postgres_execSQL()
 ##
 function module_postgres_getListDatabases()
 {
-    local OPTS=$(module_postgres_getOptionsConnection "$1" "$2" "$3" "$4")
+    local OPTS=$(module_postgres_getOptionsConnection "$1" "$2" "$3")
     logger_debug "module_postgres_getListDatabases (${OPTS})"
+    module_postgres_setPassword "$4"
 
     local DATABASES
     #DATABASES=$(psql --username=$DB_USER -l -t | grep -vE 'template[0|1]' | awk '{print $1}' | grep -vE 'postgres|\|')
@@ -101,11 +125,11 @@ function module_postgres_getListDatabases()
 # @param $1 : Host du serveur Postgres
 # @param $2 : Port du serveur
 # @param $3 : Utilisateur postgres
-# @param $4 : Mot de passe
 # @return string
 ##
 function module_postgres_getOptionsConnection()
 {
+    logger_debug "module_postgres_getOptionsConnection($1, $2, $3)"
     local OPTIONS
 
     if [[ -n $1 ]]; then
@@ -131,17 +155,35 @@ function module_postgres_getOptionsConnection()
 
 
 ###
+# Affecte le password pour la chaine de connexion
+# @param $1 : Mot de passe
+##
+function module_postgres_setPassword()
+{
+    logger_debug "module_postgres_setPassword ($1)"
+
+    if [[ -n $1 ]]; then
+        export PGPASSWORD=$1
+    elif [[ -n ${OLIX_MODULE_POSTGRES_PASS} ]]; then
+        export PGPASSWORD=${OLIX_MODULE_POSTGRES_PASS}
+    fi
+}
+
+
+###
 # Fait un dump des objects globaux de l'instance du serveur
 # @param $1  : Fichier de dump
 # @param $2  : Host du serveur Postgres
 # @param $3  : Port du serveur
 # @param $4  : Utilisateur Postgres
+# @param $5  : Mot de passe
 # @return bool
 ##
 function module_postgres_dumpOnlyGlobalObjects()
 {
     local OPTS=$(module_postgres_getOptionsConnection "$2" "$3" "$4")
     logger_debug "module_postgres_dumpOnlyGlobalObjects ($1, ${OPTS})"
+    module_postgres_setPassword "$5"
 
     pg_dumpall --globals-only ${OPTS} > $1 2> ${OLIX_LOGGER_FILE_ERR}
     [[ $? -ne 0 ]] && return 1
@@ -156,12 +198,14 @@ function module_postgres_dumpOnlyGlobalObjects()
 # @param $3  : Host du serveur Postgres
 # @param $4  : Port du serveur
 # @param $5  : Utilisateur Postgres
+# @param $6  : Mot de passe
 # @return bool
 ##
 function module_postgres_dumpDatabase()
 {
     local OPTS=$(module_postgres_getOptionsConnection "$3" "$4" "$5")
     logger_debug "module_postgres_dumpDatabase ($1, $2, ${OPTS})"
+    module_postgres_setPassword "$6"
 
     if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
         pg_dump --verbose --format=c ${OPTS} --file=$2 $1
@@ -180,12 +224,14 @@ function module_postgres_dumpDatabase()
 # @param $3  : Host du serveur Postgres
 # @param $4  : Port du serveur
 # @param $5  : Utilisateur Postgres
+# @param $6  : Mot de passe
 # @return bool
 ##
 function module_postgres_restoreDatabase()
 {
     local OPTS=$(module_postgres_getOptionsConnection "$3" "$4" "$5")
     logger_debug "module_postgres_restoreDatabase ($1, $2, ${OPTS})"
+    module_postgres_setPassword "$6"
 
     if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
         pg_restore --verbose ${OPTS} --dbname=$2 $1
@@ -259,7 +305,7 @@ function module_postgres_backupDatabase()
 
     module_postgres_dumpDatabase "${BASE}" "${DUMP}"
     stdout_printMessageReturn $? "Sauvegarde de la base" "$(filesystem_getSizeFileHuman ${DUMP})" "$((SECONDS-START))"
-    [[ $? -ne 0 ]] && logger_warning && return 1
+    [[ $? -ne 0 ]] && logger_error && return 1
 
     backup_finalize "${DUMP}" "${DIRBCK}" "${COMPRESS}" "${PURGE}" "dump-${BASE}-*" \
         "${FTP}" "${FTP_HOST}" "${FTP_USER}" "${FTP_PASS}" "${FTP_PATH}"
