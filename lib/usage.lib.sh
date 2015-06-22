@@ -196,6 +196,10 @@ function module_postgres_usage_getParams()
                 IFS='=' read -ra PARAM <<< "$1"
                 OLIX_MODULE_POSTGRES_USER=${PARAM[1]}
                 ;;
+            --pass=*)
+                IFS='=' read -ra PARAM <<< "$1"
+                OLIX_MODULE_POSTGRES_PASS=${PARAM[1]}
+                ;;
             --dir=*)
                 IFS='=' read -ra PARAM <<< "$1"
                 OLIX_MODULE_POSTGRES_BACKUP_DIR=${PARAM[1]}
@@ -228,6 +232,7 @@ function module_postgres_usage_getParams()
     logger_debug "OLIX_MODULE_POSTGRES_HOST=${OLIX_MODULE_POSTGRES_HOST}"
     logger_debug "OLIX_MODULE_POSTGRES_PORT=${OLIX_MODULE_POSTGRES_PORT}"
     logger_debug "OLIX_MODULE_POSTGRES_USER=${OLIX_MODULE_POSTGRES_USER}"
+    logger_debug "OLIX_MODULE_POSTGRES_PASS=${OLIX_MODULE_POSTGRES_PASS}"
     logger_debug "OLIX_MODULE_POSTGRES_PARAM1=${OLIX_MODULE_POSTGRES_PARAM1}"
     logger_debug "OLIX_MODULE_POSTGRES_PARAM2=${OLIX_MODULE_POSTGRES_PARAM2}"
     logger_debug "OLIX_MODULE_POSTGRES_BACKUP_DIR=${OLIX_MODULE_POSTGRES_BACKUP_DIR}"
