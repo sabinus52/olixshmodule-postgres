@@ -56,6 +56,22 @@ function module_postgres_action_init()
 
 
 ###
+# Test de la connexion au serveur Postgres
+##
+function module_postgres_action_check()
+{
+    logger_debug "module_postgres_action_check ($@)"
+
+    echo -e "Test de connexion avec ${Ccyan}${OLIX_MODULE_POSTGRES_USER}@${OLIX_MODULE_POSTGRES_HOST}:${OLIX_MODULE_POSTGRES_PORT}${CVOID}"
+    module_postgres_checkConnect
+    [[ $? -ne 0 ]] && logger_critical "Echec de connexion au serveur Postgres"
+    psql --version
+
+    echo -e "${Cvert}Connexion au serveur Postgres réussi${CVOID}"
+}
+
+
+###
 # Fait un dump d'une base de données
 ##
 function module_postgres_action_dump()

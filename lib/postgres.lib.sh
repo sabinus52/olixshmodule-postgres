@@ -52,6 +52,26 @@ function module_postgres_isBaseExists()
 
 
 ###
+# Test une connexion au serveur de base de données
+# @param $1  : Host du serveur Postgres
+# @param $2  : Port du serveur
+# @param $4  : Utilisateur mysql
+# @param $4  : Mot de passe
+# @return bool
+##
+function module_postgres_checkConnect()
+{
+    local OPTS=$(module_postgres_getOptionsConnection "$1" "$2" "$3" "$4")
+    logger_debug "module_postgres_checkConnect (${OPTS})"
+
+    psql ${OPTS} --no-password --command="\d" postgres > /dev/null
+    [[ $? -ne 0 ]] && return 1
+
+    return 0
+}
+
+
+###
 # Execute une requete
 # @apram $1 : Requete
 # @param $2 : Host du serveur Postgres
