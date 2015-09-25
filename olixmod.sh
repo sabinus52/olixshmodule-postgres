@@ -79,6 +79,7 @@ olixmod_init()
     logger_debug "module_postgres__olixmod_init (null)"
     source modules/postgres/lib/postgres.lib.sh
     source modules/postgres/lib/action.lib.sh
+    module_initialize $@
     module_postgres_action_init $@
 }
 
