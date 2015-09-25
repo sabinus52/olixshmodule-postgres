@@ -15,6 +15,7 @@
 function module_postgres_action_init()
 {
     logger_debug "module_postgres_action_init ($@)"
+    local FILECONF=$(config_getFilenameModule ${OLIX_MODULE_NAME})
 
     # Host
     stdin_read "Host du serveur PostgreSQL (vide en mode Unix socket)" "${OLIX_MODULE_POSTGRES_HOST}"
@@ -42,14 +43,14 @@ function module_postgres_action_init()
     OLIX_MODULE_POSTGRES_PATH=${OLIX_STDIN_RETURN}
 
     # Ecriture du fichier de configuration
-    logger_info "Création du fichier de configuration ${OLIX_MODULE_FILECONF}"
-    echo "# Fichier de configuration du module POSTGRES" > ${OLIX_MODULE_FILECONF} 2> ${OLIX_LOGGER_FILE_ERR}
+    logger_info "Création du fichier de configuration ${FILECONF}"
+    echo "# Fichier de configuration du module POSTGRES" > ${FILECONF} 2> ${OLIX_LOGGER_FILE_ERR}
     [[ $? -ne 0 ]] && logger_critical
-    echo "OLIX_MODULE_POSTGRES_HOST=${OLIX_MODULE_POSTGRES_HOST}" >> ${OLIX_MODULE_FILECONF}
-    echo "OLIX_MODULE_POSTGRES_PORT=${OLIX_MODULE_POSTGRES_PORT}" >> ${OLIX_MODULE_FILECONF}
-    echo "OLIX_MODULE_POSTGRES_USER=${OLIX_MODULE_POSTGRES_USER}" >> ${OLIX_MODULE_FILECONF}
-    echo "OLIX_MODULE_POSTGRES_PASS=${OLIX_MODULE_POSTGRES_PASS}" >> ${OLIX_MODULE_FILECONF}
-    echo "OLIX_MODULE_POSTGRES_PATH=${OLIX_MODULE_POSTGRES_PATH}" >> ${OLIX_MODULE_FILECONF}
+    echo "OLIX_MODULE_POSTGRES_HOST=${OLIX_MODULE_POSTGRES_HOST}" >> ${FILECONF}
+    echo "OLIX_MODULE_POSTGRES_PORT=${OLIX_MODULE_POSTGRES_PORT}" >> ${FILECONF}
+    echo "OLIX_MODULE_POSTGRES_USER=${OLIX_MODULE_POSTGRES_USER}" >> ${FILECONF}
+    echo "OLIX_MODULE_POSTGRES_PASS=${OLIX_MODULE_POSTGRES_PASS}" >> ${FILECONF}
+    echo "OLIX_MODULE_POSTGRES_PATH=${OLIX_MODULE_POSTGRES_PATH}" >> ${FILECONF}
 
     echo -e "${Cvert}Action terminée avec succès${CVOID}"
 }
