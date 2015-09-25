@@ -8,13 +8,14 @@
 
 OLIX_MODULE_NAME="postgres"
 
-# Valeur par defaut de la configuration principale
+# Valeur par defaut de la configuration principale (/etc/olixsh/mysql.conf | $param)
 OLIX_MODULE_POSTGRES_HOST=""
 OLIX_MODULE_POSTGRES_PORT="5432"
 OLIX_MODULE_POSTGRES_USER="postgres"
 OLIX_MODULE_POSTGRES_PASS=
 OLIX_MODULE_POSTGRES_PATH="/home/pgdata"
-# Valeur par defaut de la configuration optionnelle
+
+# Valeur par defaut de la configuration optionnelle à rajouter dans (/etc/olixsh/mysql.conf | $param)
 OLIX_MODULE_POSTGRES_BACKUP_DIR="/tmp"
 OLIX_MODULE_POSTGRES_BACKUP_COMPRESS="GZ"
 OLIX_MODULE_POSTGRES_BACKUP_PURGE="5"

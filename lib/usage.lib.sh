@@ -61,7 +61,7 @@ function module_postgres_usage_dump()
     echo
     echo -e "Faire un dump d'une base de données PostreSQL"
     echo
-    echo -e "${CBLANC} Usage : ${CVIOLET}$(basename ${OLIX_ROOT_SCRIPT}) ${CVERT}postgres ${CJAUNE}dump${CVOID} ${CBLANC}base dumpfile [OPTIONS]${CVOID}"
+    echo -e "${CBLANC} Usage : ${CVIOLET}$(basename ${OLIX_ROOT_SCRIPT}) ${CVERT}postgres ${CJAUNE}dump${CVOID} ${CBLANC}<base> <dumpfile> [OPTIONS]${CVOID}"
     echo
     echo -e "${Ccyan}OPTIONS${CVOID}"
     echo -en "${CBLANC} --host=${OLIX_MODULE_POSTGRES_HOST} ${CVOID}"; stdout_strpad "${OLIX_MODULE_POSTGRES_HOST}" 13 " "; echo " : Host du serveur POSTGRES"
@@ -87,7 +87,7 @@ function module_postgres_usage_restore()
     echo
     echo -e "Restauration d'une base de données PostreSQL à partir d'un fichier de dump"
     echo
-    echo -e "${CBLANC} Usage : ${CVIOLET}$(basename ${OLIX_ROOT_SCRIPT}) ${CVERT}postgres ${CJAUNE}restore${CVOID} ${CBLANC}dumpfile base [OPTIONS]${CVOID}"
+    echo -e "${CBLANC} Usage : ${CVIOLET}$(basename ${OLIX_ROOT_SCRIPT}) ${CVERT}postgres ${CJAUNE}restore${CVOID} ${CBLANC}<dumpfile> <base> [OPTIONS]${CVOID}"
     echo
     echo -e "${Ccyan}OPTIONS${CVOID}"
     echo -en "${CBLANC} --host=${OLIX_MODULE_POSTGRES_HOST} ${CVOID}"; stdout_strpad "${OLIX_MODULE_POSTGRES_HOST}" 13 " "; echo " : Host du serveur POSTGRES"
@@ -113,7 +113,7 @@ function module_postgres_usage_sync()
     echo
     echo -e "Synchronisation d'une base à partir d'un serveur PostreSQL distant"
     echo
-    echo -e "${CBLANC} Usage : ${CVIOLET}$(basename ${OLIX_ROOT_SCRIPT}) ${CVERT}postgres ${CJAUNE}sync${CVOID} ${CBLANC}base_destination${CVOID}"
+    echo -e "${CBLANC} Usage : ${CVIOLET}$(basename ${OLIX_ROOT_SCRIPT}) ${CVERT}postgres ${CJAUNE}sync${CVOID} ${CBLANC}<base_destination>${CVOID}"
     echo
     echo -e "${CJAUNE}Liste des BASES disponibles${CVOID} :"
     for I in $(module_postgres_getListDatabases); do
