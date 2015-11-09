@@ -271,9 +271,9 @@ function module_postgres_dropDatabaseIfExists()
 # @param $1 : Nom du rôle
 # @param $2 : Mot de passe du rôle
 # @param $3 : Droits du rôle
-# @param $4 : Host du serveur MySQL
+# @param $4 : Host du serveur
 # @param $5 : Port du serveur
-# @param $6 : Utilisateur mysql
+# @param $6 : Utilisateur
 # @param $7 : Mot de passe
 ##
 function module_postgres_createRole()
@@ -294,9 +294,9 @@ function module_postgres_createRole()
 ###
 # Supprime un rôle
 # @param $1 : Nom du rôle
-# @param $2 : Host du serveur MySQL
+# @param $2 : Host du serveur 
 # @param $3 : Port du serveur
-# @param $4 : Utilisateur mysql
+# @param $4 : Utilisateur 
 # @param $5 : Mot de passe
 ##
 function module_postgres_dropRole()
@@ -316,6 +316,25 @@ function module_postgres_dropRole()
     else
         psql ${OPTS} --command="DROP ROLE $1;" 2> ${OLIX_LOGGER_FILE_ERR}
     fi
+    [[ $? -ne 0 ]] && return 1
+    return 0
+}
+
+
+###
+# Test si un rôle existe
+# @param $1 : Nom du rôle
+# @param $2 : Host du serveur 
+# @param $3 : Port du serveur
+# @param $4 : Utilisateur 
+# @param $5 : Mot de passe
+##
+function module_postgres_isRoleExists()
+{
+    local OPTS=$(module_postgres_getOptionsConnection "$2" "$3" "$4")
+    logger_debug "module_postgres_isRoleExists ($1, ${OPTS})"
+
+    psql ${OPTS} postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='$1'" | grep -q 1
     [[ $? -ne 0 ]] && return 1
     return 0
 }

@@ -37,7 +37,7 @@ _olixsh_module_actions()
 {
     local CUR ACTIONS
     CUR="${COMP_WORDS[COMP_CWORD]}"
-    ACTIONS="init check dump restore sync backup bckwal help"
+    ACTIONS="init check create dump restore sync backup bckwal help"
 
     COMPREPLY=( $(compgen -W "${ACTIONS}" -- ${CUR}) )
 }

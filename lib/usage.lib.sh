@@ -23,6 +23,7 @@ function module_postgres_usage_main()
     echo -e "${CJAUNE}Liste des ACTIONS disponibles${CVOID} :"
     echo -e "${Cjaune} init    ${CVOID}  : Initialisation du module"
     echo -e "${Cjaune} check   ${CVOID}  : Test de la connexion au serveur Postgres"
+    echo -e "${Cjaune} create  ${CVOID}  : Création d'une base de données"
     echo -e "${Cjaune} dump    ${CVOID}  : Fait un dump d'une base de données"
     echo -e "${Cjaune} restore ${CVOID}  : Restauration d'une base de données"
     echo -e "${Cjaune} sync    ${CVOID}  : Synchronisation d'une base à partir d'un serveur distant"
@@ -40,7 +41,7 @@ function module_postgres_usage_check()
     logger_debug "module_postgres_usage_check ()"
     stdout_printVersion
     echo
-    echo -e "Test de la connexion au serveur PostreSQL"
+    echo -e "Test de la connexion au serveur PostgreSQL"
     echo
     echo -e "${CBLANC} Usage : ${CVIOLET}$(basename ${OLIX_ROOT_SCRIPT}) ${CVERT}postgres ${CJAUNE}check${CVOID} ${CBLANC}[OPTIONS]${CVOID}"
     echo
@@ -52,6 +53,26 @@ function module_postgres_usage_check()
 
 
 ###
+# Usage de l'action CREATE
+##
+function module_postgres_usage_create()
+{
+    logger_debug "module_postgres_usage_create ()"
+    stdout_printVersion
+    echo
+    echo -e "Création d'une base de données PostgreSQL"
+    echo
+    echo -e "${CBLANC} Usage : ${CVIOLET}$(basename ${OLIX_ROOT_SCRIPT}) ${CVERT}postgres ${CJAUNE}create${CVOID} ${CBLANC}<base> <owner> [OPTIONS]${CVOID}"
+    echo
+    echo -e "${Ccyan}OPTIONS${CVOID}"
+    echo -en "${CBLANC} --host=${OLIX_MODULE_POSTGRES_HOST} ${CVOID}"; stdout_strpad "${OLIX_MODULE_POSTGRES_HOST}" 13 " "; echo " : Host du serveur POSTGRES"
+    echo -en "${CBLANC} --port=${OLIX_MODULE_POSTGRES_PORT} ${CVOID}"; stdout_strpad "${OLIX_MODULE_POSTGRES_PORT}" 13 " "; echo " : Port du serveur POSTGRES"
+    echo -en "${CBLANC} --user=${OLIX_MODULE_POSTGRES_USER} ${CVOID}"; stdout_strpad "${OLIX_MODULE_POSTGRES_USER}" 13 " "; echo " : User du serveur POSTGRES"
+    echo -en "${CBLANC} --pass= ${CVOID}"; stdout_strpad "" 13 " "; echo " : Password du serveur POSTGRES"
+}
+
+
+###
 # Usage de l'action DUMP
 ##
 function module_postgres_usage_dump()
@@ -59,7 +80,7 @@ function module_postgres_usage_dump()
     logger_debug "module_postgres_usage_dump ()"
     stdout_printVersion
     echo
-    echo -e "Faire un dump d'une base de données PostreSQL"
+    echo -e "Faire un dump d'une base de données PostgreSQL"
     echo
     echo -e "${CBLANC} Usage : ${CVIOLET}$(basename ${OLIX_ROOT_SCRIPT}) ${CVERT}postgres ${CJAUNE}dump${CVOID} ${CBLANC}<base> <dumpfile> [OPTIONS]${CVOID}"
     echo
@@ -85,7 +106,7 @@ function module_postgres_usage_restore()
     logger_debug "module_postgres_usage_restore ()"
     stdout_printVersion
     echo
-    echo -e "Restauration d'une base de données PostreSQL à partir d'un fichier de dump"
+    echo -e "Restauration d'une base de données PostgreSQL à partir d'un fichier de dump"
     echo
     echo -e "${CBLANC} Usage : ${CVIOLET}$(basename ${OLIX_ROOT_SCRIPT}) ${CVERT}postgres ${CJAUNE}restore${CVOID} ${CBLANC}<dumpfile> <base> [OPTIONS]${CVOID}"
     echo
@@ -111,7 +132,7 @@ function module_postgres_usage_sync()
     logger_debug "module_postgres_usage_sync ()"
     stdout_printVersion
     echo
-    echo -e "Synchronisation d'une base à partir d'un serveur PostreSQL distant"
+    echo -e "Synchronisation d'une base à partir d'un serveur PostgreSQL distant"
     echo
     echo -e "${CBLANC} Usage : ${CVIOLET}$(basename ${OLIX_ROOT_SCRIPT}) ${CVERT}postgres ${CJAUNE}sync${CVOID} ${CBLANC}<base_destination>${CVOID}"
     echo

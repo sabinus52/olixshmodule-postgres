@@ -73,6 +73,36 @@ function module_postgres_action_check()
 
 
 ###
+# Créé une base de données
+##
+function module_postgres_action_create()
+{
+    logger_debug "module_postgres_action_create ($@)"
+
+    # Affichage de l'aide
+    [ $# -lt 2 ] && module_postgres_usage_create && core_exit 1
+
+    # Si base existe
+    module_postgres_isBaseExists "${OLIX_MODULE_POSTGRES_PARAM1}"
+    [[ $? -eq 0 ]] && logger_critical "La base '${OLIX_MODULE_POSTGRES_PARAM1}' existe déjà"
+
+    # Test si le role existe
+    module_postgres_isRoleExists "${OLIX_MODULE_POSTGRES_PARAM2}"
+    if [[ $? -ne 0 ]]; then
+        module_postgres_createRole ${OLIX_MODULE_POSTGRES_PARAM2}
+        [[ $? -ne 0 ]] && logger_critical "Impossible de créer le rôle '${OLIX_MODULE_POSTGRES_PARAM2}'"
+    else
+        logger_warning "Le rôle '$1' existe déjà"
+    fi
+
+    module_postgres_createDatabase "${OLIX_MODULE_POSTGRES_PARAM1}" "${OLIX_MODULE_POSTGRES_PARAM2}"
+    [[ $? -ne 0 ]] && logger_critical "Impossible de créer la base '${OLIX_MODULE_POSTGRES_PARAM1}'"
+
+    echo -e "${Cvert}Action terminée avec succès${CVOID}"
+}
+
+
+###
 # Fait un dump d'une base de données
 ##
 function module_postgres_action_dump()
