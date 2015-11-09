@@ -173,10 +173,11 @@ function module_postgres_setPassword()
 ###
 # Crée une nouvelle base de données
 # @param $1 : Nom de la base à créer
-# @param $2 : Host du serveur Postgres
-# @param $3 : Port du serveur
-# @param $4 : Utilisateur postgres
-# @param $5 : Mot de passe
+# @param $2 : Propriétaire
+# @param $3 : Host du serveur Postgres
+# @param $4 : Port du serveur
+# @param $5 : Utilisateur postgres
+# @param $6 : Mot de passe
 # @return bool
 ##
 function module_postgres_createDatabase()
@@ -185,9 +186,9 @@ function module_postgres_createDatabase()
     logger_debug "module_postgres_createDatabase ($1, ${OPTS})"
 
     if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
-        psql --echo-all ${OPTS} --command="CREATE DATABASE $1;"
+        psql --echo-all ${OPTS} --command="CREATE DATABASE $1 OWNER $2;"
     else
-        psql ${OPTS} --command="CREATE DATABASE $1;" 2> ${OLIX_LOGGER_FILE_ERR}
+        psql ${OPTS} --command="CREATE DATABASE $1 OWNER $2;" 2> ${OLIX_LOGGER_FILE_ERR}
     fi
     [[ $? -ne 0 ]] && return 1
     return 0
@@ -236,6 +237,61 @@ function module_postgres_dropDatabaseIfExists()
         psql --echo-all ${OPTS} --command="DROP DATABASE IF EXISTS $1;"
     else
         psql ${OPTS} --command="DROP DATABASE IF EXISTS $1;" 2> ${OLIX_LOGGER_FILE_ERR}
+    fi
+    [[ $? -ne 0 ]] && return 1
+    return 0
+}
+
+
+###
+# Crée un rôle
+# @param $1 : Nom du rôle
+# @param $2 : Mot de passe du rôle
+# @param $3 : Droits du rôle
+# @param $4 : Host du serveur MySQL
+# @param $5 : Port du serveur
+# @param $6 : Utilisateur mysql
+# @param $7 : Mot de passe
+##
+function module_postgres_createRole()
+{
+    local OPTS=$(module_postgres_getOptionsConnection "$4" "$5" "$6")
+    logger_debug "module_postgres_createRole ($1, $2, $3, ${OPTS})"
+
+    if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
+        psql --echo-all ${OPTS} --command="CREATE ROLE $1 $3 ENCRYPTED PASSWORD '$2';"
+    else
+        psql ${OPTS} --command="CREATE ROLE $1 $3 ENCRYPTED PASSWORD '$2';" 2> ${OLIX_LOGGER_FILE_ERR}
+    fi
+    [[ $? -ne 0 ]] && return 1
+    return 0
+}
+
+
+###
+# Supprime un rôle
+# @param $1 : Nom du rôle
+# @param $2 : Host du serveur MySQL
+# @param $3 : Port du serveur
+# @param $4 : Utilisateur mysql
+# @param $5 : Mot de passe
+##
+function module_postgres_dropRole()
+{
+    local OPTS=$(module_postgres_getOptionsConnection "$2" "$3" "$4")
+    logger_debug "module_postgres_dropRole ($1, ${OPTS})"
+
+    # Test si le role existe
+    psql ${OPTS} postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='$1'" | grep -q 1
+    if [[ $? -ne 0 ]]; then
+        logger_warning "Le rôle '$1' n'existe pas"
+        return 0
+    fi
+
+    if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
+        psql --echo-all ${OPTS} --command="DROP ROLE $1;"
+    else
+        psql ${OPTS} --command="DROP ROLE $1;" 2> ${OLIX_LOGGER_FILE_ERR}
     fi
     [[ $? -ne 0 ]] && return 1
     return 0
