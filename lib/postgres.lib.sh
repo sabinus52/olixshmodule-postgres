@@ -171,6 +171,78 @@ function module_postgres_setPassword()
 
 
 ###
+# Crée une nouvelle base de données
+# @param $1 : Nom de la base à créer
+# @param $2 : Host du serveur Postgres
+# @param $3 : Port du serveur
+# @param $4 : Utilisateur postgres
+# @param $5 : Mot de passe
+# @return bool
+##
+function module_postgres_createDatabase()
+{
+    local OPTS=$(module_postgres_getOptionsConnection "$3" "$4" "$5")
+    logger_debug "module_postgres_createDatabase ($1, ${OPTS})"
+
+    if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
+        psql --echo-all ${OPTS} --command="CREATE DATABASE $1;"
+    else
+        psql ${OPTS} --command="CREATE DATABASE $1;" 2> ${OLIX_LOGGER_FILE_ERR}
+    fi
+    [[ $? -ne 0 ]] && return 1
+    return 0
+}
+
+
+###
+# Supprime une base de données
+# @param $1 : Nom de la base à créer
+# @param $2 : Host du serveur Postgres
+# @param $3 : Port du serveur
+# @param $4 : Utilisateur postgres
+# @param $5 : Mot de passe
+# @return bool
+##
+function module_postgres_dropDatabase()
+{
+    local OPTS=$(module_postgres_getOptionsConnection "$3" "$4" "$5")
+    logger_debug "module_postgres_dropDatabase ($1, ${OPTS})"
+
+    if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
+        psql --echo-all ${OPTS} --command="DROP DATABASE $1;"
+    else
+        psql ${OPTS} --command="DROP DATABASE $1;" 2> ${OLIX_LOGGER_FILE_ERR}
+    fi
+    [[ $? -ne 0 ]] && return 1
+    return 0
+}
+
+
+###
+# Supprime une base de données même si elle n'existe pas
+# @param $1 : Nom de la base à créer
+# @param $2 : Host du serveur Postgres
+# @param $3 : Port du serveur
+# @param $4 : Utilisateur postgres
+# @param $5 : Mot de passe
+# @return bool
+##
+function module_postgres_dropDatabaseIfExists()
+{
+    local OPTS=$(module_postgres_getOptionsConnection "$3" "$4" "$5")
+    logger_debug "module_postgres_dropDatabaseIfExists ($1, ${OPTS})"
+
+    if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
+        psql --echo-all ${OPTS} --command="DROP DATABASE IF EXISTS $1;"
+    else
+        psql ${OPTS} --command="DROP DATABASE IF EXISTS $1;" 2> ${OLIX_LOGGER_FILE_ERR}
+    fi
+    [[ $? -ne 0 ]] && return 1
+    return 0
+}
+
+
+###
 # Fait un dump des objects globaux de l'instance du serveur
 # @param $1  : Fichier de dump
 # @param $2  : Host du serveur Postgres
