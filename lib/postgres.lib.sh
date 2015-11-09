@@ -84,7 +84,7 @@ function module_postgres_checkConnect()
 function module_postgres_execSQL()
 {
     local OPTS=$(module_postgres_getOptionsConnection "$2" "$3" "$4")
-    logger_debug "module_postgres_getListDatabases (${OPTS})"
+    logger_debug "module_postgres_execSQL (${OPTS})"
     module_postgres_setPassword "$5"
 
     if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
@@ -94,6 +94,29 @@ function module_postgres_execSQL()
     fi
     [[ $? -ne 0 ]] && return 1
     return 0
+}
+
+
+###
+# Execute une requete et retourne la valeur d'un champ
+# @apram $1 : Requete
+# @param $2 : Host du serveur Postgres
+# @param $3 : Port du serveur
+# @param $4 : Utilisateur postgres
+# @param $5 : Mot de passe
+# @return : un champ
+##
+function module_postgres_getSingleResultSQL()
+{
+    local OPTS=$(module_postgres_getOptionsConnection "$2" "$3" "$4")
+    logger_debug "module_postgres_getSingleResultSQL (${OPTS})"
+    module_postgres_setPassword "$5"
+
+    if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
+        echo $(psql ${OPTS} --tuples-only --no-align --command="$1" 2> ${OLIX_LOGGER_FILE_ERR})
+    else
+        echo $(psql ${OPTS} --tuples-only --no-align --command="$1" > /dev/null 2> ${OLIX_LOGGER_FILE_ERR})
+    fi
 }
 
 
@@ -373,20 +396,24 @@ function module_postgres_restoreDatabase()
 
 ###
 # Copie une base de données depuis un serveur distant vers une base locale
-# @param $1  : Paramètre de connexion de la source
-# @param $2  : Base source
-# @param $3  : Paramètre de connexion locale
-# @param $4  : Base de destination
+# @param $1  : Host du serveur Postgres distant
+# @param $2  : Port du serveur distant
+# @param $3  : Utilisateur Postgres distant
+# @param $4  : Mot de passe distant
+# @param $5  : Base source distante
+# @param $6  : Base de destination locale
 # @return bool
 ##
 function module_postgres_synchronizeDatabase()
 {
-    logger_debug "module_postgres_synchronizeDatabase ($1, $2, $3, $4)"
+    local OPTS_LOCAL=$(module_postgres_getOptionsConnection "" "" "")
+    logger_debug "module_postgres_synchronizeDatabase ($1, $2, $3, $4, $5, $6, ${OPTS_LOCAL})"
+    module_postgres_setPassword "$4"
 
     if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
-        pg_dump --verbose --format=c $1 $2 | pg_restore --verbose $3 --dbname=$4
+        pg_dump --verbose --format=c --host=$1 --port=$2 --username=$3 $5 | pg_restore --verbose ${OPTS_LOCAL} --dbname=$5
     else
-        pg_dump --format=c $1 $2 | pg_restore $3 --dbname=$4 2> ${OLIX_LOGGER_FILE_ERR}
+        pg_dump --format=c --host=$1 --port=$2 --username=$3 $5 | pg_restore ${OPTS_LOCAL} --dbname=$5 2> ${OLIX_LOGGER_FILE_ERR}
     fi
     [[ $? -eq 0 && ${PIPESTATUS} -eq 0 ]] && return 0
     return 1

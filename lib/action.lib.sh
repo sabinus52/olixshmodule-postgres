@@ -106,7 +106,22 @@ function module_postgres_action_restore()
 
     # Vérifie les paramètres
     [[ ! -r ${OLIX_MODULE_POSTGRES_PARAM1} ]] && logger_critical "Le fichier '${OLIX_MODULE_POSTGRES_PARAM1}' est absent ou inaccessible"
+
+    # Si base existe
+    module_postgres_isBaseExists "${OLIX_MODULE_POSTGRES_PARAM1}"
+    [[ $? -ne 0 ]] && logger_critical "La base '${OLIX_MODULE_POSTGRES_PARAM1}' n'existe pas"
+
+    # Recupération du propriétaire de la base
+    local DBOWNER=$(module_postgres_getSingleResultSQL "SELECT pg_catalog.pg_get_userbyid(d.datdba) FROM pg_catalog.pg_database d WHERE d.datname = '${OLIX_MODULE_POSTGRES_PARAM1}'")
+    [[ -z ${DBOWNER} ]] && logger_critical "Impossible de récupérer le propriétaire de la base '${OLIX_MODULE_POSTGRES_PARAM1}'"
+
+    #Suppression et création de la base
+    module_postgres_dropDatabaseIfExists "${OLIX_MODULE_POSTGRES_PARAM1}"
+    [[ $? -ne 0 ]] && logger_critical "Impossible de supprimer la base '${OLIX_MODULE_POSTGRES_PARAM1}'"
+    module_postgres_createDatabase "${OLIX_MODULE_POSTGRES_PARAM1}" "${DBOWNER}"
+    [[ $? -ne 0 ]] && logger_critical "Impossible de créer la base '${OLIX_MODULE_POSTGRES_PARAM1}'"
     
+    # Restauration
     logger_info "Restauration du dump '${OLIX_MODULE_POSTGRES_PARAM1}' vers la base '${OLIX_MODULE_POSTGRES_PARAM2}'"
     module_postgres_restoreDatabase ${OLIX_MODULE_POSTGRES_PARAM1} ${OLIX_MODULE_POSTGRES_PARAM2}
     [[ $? -ne 0 ]] && logger_critical "Echec de la restauration du dump '${OLIX_MODULE_POSTGRES_PARAM1}' vers la base '${OLIX_MODULE_POSTGRES_PARAM2}'"
@@ -129,6 +144,16 @@ function module_postgres_action_sync()
     module_postgres_isBaseExists "${OLIX_MODULE_POSTGRES_PARAM1}"
     [[ $? -ne 0 ]] && logger_critical "La base '${OLIX_MODULE_POSTGRES_PARAM1}' n'existe pas"
 
+    # Recupération du propriétaire de la base
+    local DBOWNER=$(module_postgres_getSingleResultSQL "SELECT pg_catalog.pg_get_userbyid(d.datdba) FROM pg_catalog.pg_database d WHERE d.datname = '${OLIX_MODULE_POSTGRES_PARAM1}'")
+    [[ -z ${DBOWNER} ]] && logger_critical "Impossible de récupérer le propriétaire de la base '${OLIX_MODULE_POSTGRES_PARAM1}'"
+
+    #Suppression et création de la base
+    module_postgres_dropDatabaseIfExists "${OLIX_MODULE_POSTGRES_PARAM1}"
+    [[ $? -ne 0 ]] && logger_critical "Impossible de supprimer la base '${OLIX_MODULE_POSTGRES_PARAM1}'"
+    module_postgres_createDatabase "${OLIX_MODULE_POSTGRES_PARAM1}" "${DBOWNER}"
+    [[ $? -ne 0 ]] && logger_critical "Impossible de créer la base '${OLIX_MODULE_POSTGRES_PARAM1}'"
+
     # Demande des infos de connexion à la base distante
     stdin_readConnexionServer "" "5432" "postgres"
 
@@ -139,10 +164,8 @@ function module_postgres_action_sync()
     if [[ -n ${OLIX_MODULE_POSTGRES_PARAM2} ]]; then
         logger_info "Synchronisation de la base '${OLIX_STDIN_RETURN_HOST}:${OLIX_MODULE_POSTGRES_PARAM2}' vers '${OLIX_MODULE_POSTGRES_PARAM1}'"
         module_postgres_synchronizeDatabase \
-            "--host=${OLIX_STDIN_RETURN_HOST} --port=${OLIX_STDIN_RETURN_PORT} --username=${OLIX_STDIN_RETURN_USER}" \
-            "${OLIX_MODULE_POSTGRES_PARAM2}" \
-            "--host=${OLIX_MODULE_POSTGRES_HOST} --port=${OLIX_MODULE_POSTGRES_PORT} --username=${OLIX_MODULE_POSTGRES_USER}" \
-            "${OLIX_MODULE_POSTGRES_PARAM1}"
+            "${OLIX_STDIN_RETURN_HOST}" "${OLIX_STDIN_RETURN_PORT}" "${OLIX_STDIN_RETURN_USER}" "" \
+            "${OLIX_MODULE_POSTGRES_PARAM2}" "${OLIX_MODULE_POSTGRES_PARAM1}"
         [[ $? -ne 0 ]] && logger_critical "Echec de la synchronisation de '${OLIX_STDIN_RETURN_HOST}:${OLIX_MODULE_POSTGRES_PARAM2}' vers '${OLIX_MODULE_POSTGRES_PARAM1}'"
         echo -e "${Cvert}Action terminée avec succès${CVOID}"
     fi
