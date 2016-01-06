@@ -85,8 +85,9 @@ Ces derniers paramètres peuvent être insérés dans le fichier de configuratio
 
 Réalisation d'une sauvegarde à chaud en mode PITR de l'instance PostgreSQL avec rapport pour des tâches planifiées.
 
-Command : `olixsh postgres bckwal [--port=5432] [--user=<user>] [--dir=/tmp] [--purge=5] [--gz|--bz2] [--html] [--email=<name@domain.ltd>]
+Command : `olixsh postgres bckwal [path_wals] [--port=5432] [--user=<user>] [--dir=/tmp] [--purge=5] [--gz|--bz2] [--html] [--email=<name@domain.ltd>]
 
+- `path_wals` : Emplacement des fichiers d'archive WALs à purger
 - `--dir=/tmp` : Chemin de stockage des backups. Par defaut */tmp*
 - `--purge=5` : Nombre de jours avant la purge des anciens backups. Par défaut *5*
 - `--gz` : Compression du dump au format gzip
