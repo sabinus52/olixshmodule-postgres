@@ -486,3 +486,28 @@ function module_postgres_backupDatabase()
 
     return $?
 }
+
+
+###
+# Purge les archives WALS
+# @param $1 : Emplacement des archives WALS
+# @param $2 : Retention
+# @return bool
+##
+function module_postgres_purgeAchiveWals()
+{
+    logger_debug "module_postgres_purgeAchiveWals ($1, $2)"
+    local PURGE RET
+    local LIST_FILE_PURGED=$(core_makeTemp)
+
+    # Détermine la retention
+    case ${OLIX_MODULE_POSTGRES_BACKUP_PURGE} in
+        LOG|log)    PURGE=5;;
+        *)          PURGE=${OLIX_MODULE_POSTGRES_BACKUP_PURGE};;
+    esac
+
+    file_purgeStandard "$1" "" "${PURGE}" "${LIST_FILE_PURGED}"
+    RET=$?
+    logger_debug "$(cat ${LIST_FILE_PURGED})"
+    return ${RET}
+}

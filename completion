@@ -26,6 +26,10 @@ _olixsh_module()
             _olixsh_module_restore
             return 0
             ;;
+        bckwal)
+            _olixsh_module_bckwal
+            return 0
+            ;;
     esac
 }
 
@@ -73,6 +77,17 @@ _olixsh_module_dump()
 _olixsh_module_restore()
 {
     local CUR BASES
+    CUR="${COMP_WORDS[COMP_CWORD]}"
+
+    COMPREPLY=( $(compgen -f -- ${CUR}) )
+}
+
+###
+# Choix de l'emplacement des archives WALS de l'action BCKWAL du module postgres
+##
+_olixsh_module_bckwal()
+{
+    local CUR
     CUR="${COMP_WORDS[COMP_CWORD]}"
 
     COMPREPLY=( $(compgen -f -- ${CUR}) )

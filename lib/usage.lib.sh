@@ -186,8 +186,9 @@ function module_postgres_usage_bckwal()
     echo
     echo -e "Sauvegarde à chaud en mode PITR de l'instance PostgreSQL avec rapport pour tâches planifiées"
     echo
-    echo -e "${CBLANC} Usage : ${CVIOLET}$(basename ${OLIX_ROOT_SCRIPT}) ${CVERT}postgres ${CJAUNE}bckwal${CVOID} ${CBLANC}[OPTIONS]${CVOID}"
+    echo -e "${CBLANC} Usage : ${CVIOLET}$(basename ${OLIX_ROOT_SCRIPT}) ${CVERT}postgres ${CJAUNE}bckwal${CVOID} ${CBLANC}[PATH_ARCHIVE] [OPTIONS]${CVOID}"
     echo
+    echo -e "${Ccyan}PATH_ARCHIVE${CVOID} : Emplacement des archives de fichiers WALS"
     echo -e "${Ccyan}OPTIONS${CVOID}"
     echo -en "${CBLANC} --port=${OLIX_MODULE_POSTGRES_PORT} ${CVOID}"; stdout_strpad "${OLIX_MODULE_POSTGRES_PORT}" 13 " "; echo " : Port du serveur POSTGRES"
     echo -en "${CBLANC} --user=${OLIX_MODULE_POSTGRES_USER} ${CVOID}"; stdout_strpad "${OLIX_MODULE_POSTGRES_USER}" 13 " "; echo " : User du serveur POSTGRES"

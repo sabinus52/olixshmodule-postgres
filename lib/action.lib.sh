@@ -307,6 +307,13 @@ function module_postgres_action_bckwal()
     stdout_printMessageReturn $? "Signalisation à Postgres de la fin de la sauvegarde" "" "$((SECONDS-START))"
     [[ $? -ne 0 ]] && logger_error && IS_ERROR=true
 
+    # Purge des archives des WALS
+    if [[ -n ${OLIX_MODULE_POSTGRES_PARAM1} ]]; then
+        logger_info "Purge des anciennes archives des fichiers WALS"
+        module_postgres_purgeAchiveWals "${OLIX_MODULE_POSTGRES_PARAM1}" "${OLIX_MODULE_POSTGRES_BACKUP_PURGE}"
+        [[ $? -ne 0 ]] && logger_error && IS_ERROR=true
+    fi
+
     stdout_print; stdout_printLine; stdout_print "Sauvegarde terminée en $(core_getTimeExec) secondes" "${Cvert}"
 
     if [[ ${IS_ERROR} == true ]]; then
