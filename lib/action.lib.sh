@@ -73,6 +73,36 @@ function module_postgres_action_check()
 
 
 ###
+# Créé une base de données
+##
+function module_postgres_action_create()
+{
+    logger_debug "module_postgres_action_create ($@)"
+
+    # Affichage de l'aide
+    [ $# -lt 2 ] && module_postgres_usage_create && core_exit 1
+
+    # Si base existe
+    module_postgres_isBaseExists "${OLIX_MODULE_POSTGRES_PARAM1}"
+    [[ $? -eq 0 ]] && logger_critical "La base '${OLIX_MODULE_POSTGRES_PARAM1}' existe déjà"
+
+    # Test si le role existe
+    module_postgres_isRoleExists "${OLIX_MODULE_POSTGRES_PARAM2}"
+    if [[ $? -ne 0 ]]; then
+        module_postgres_createRole ${OLIX_MODULE_POSTGRES_PARAM2}
+        [[ $? -ne 0 ]] && logger_critical "Impossible de créer le rôle '${OLIX_MODULE_POSTGRES_PARAM2}'"
+    else
+        logger_warning "Le rôle '$1' existe déjà"
+    fi
+
+    module_postgres_createDatabase "${OLIX_MODULE_POSTGRES_PARAM1}" "${OLIX_MODULE_POSTGRES_PARAM2}"
+    [[ $? -ne 0 ]] && logger_critical "Impossible de créer la base '${OLIX_MODULE_POSTGRES_PARAM1}'"
+
+    echo -e "${Cvert}Action terminée avec succès${CVOID}"
+}
+
+
+###
 # Fait un dump d'une base de données
 ##
 function module_postgres_action_dump()
@@ -106,7 +136,22 @@ function module_postgres_action_restore()
 
     # Vérifie les paramètres
     [[ ! -r ${OLIX_MODULE_POSTGRES_PARAM1} ]] && logger_critical "Le fichier '${OLIX_MODULE_POSTGRES_PARAM1}' est absent ou inaccessible"
+
+    # Si base existe
+    module_postgres_isBaseExists "${OLIX_MODULE_POSTGRES_PARAM1}"
+    [[ $? -ne 0 ]] && logger_critical "La base '${OLIX_MODULE_POSTGRES_PARAM1}' n'existe pas"
+
+    # Recupération du propriétaire de la base
+    local DBOWNER=$(module_postgres_getSingleResultSQL "SELECT pg_catalog.pg_get_userbyid(d.datdba) FROM pg_catalog.pg_database d WHERE d.datname = '${OLIX_MODULE_POSTGRES_PARAM1}'")
+    [[ -z ${DBOWNER} ]] && logger_critical "Impossible de récupérer le propriétaire de la base '${OLIX_MODULE_POSTGRES_PARAM1}'"
+
+    #Suppression et création de la base
+    module_postgres_dropDatabaseIfExists "${OLIX_MODULE_POSTGRES_PARAM1}"
+    [[ $? -ne 0 ]] && logger_critical "Impossible de supprimer la base '${OLIX_MODULE_POSTGRES_PARAM1}'"
+    module_postgres_createDatabase "${OLIX_MODULE_POSTGRES_PARAM1}" "${DBOWNER}"
+    [[ $? -ne 0 ]] && logger_critical "Impossible de créer la base '${OLIX_MODULE_POSTGRES_PARAM1}'"
     
+    # Restauration
     logger_info "Restauration du dump '${OLIX_MODULE_POSTGRES_PARAM1}' vers la base '${OLIX_MODULE_POSTGRES_PARAM2}'"
     module_postgres_restoreDatabase ${OLIX_MODULE_POSTGRES_PARAM1} ${OLIX_MODULE_POSTGRES_PARAM2}
     [[ $? -ne 0 ]] && logger_critical "Echec de la restauration du dump '${OLIX_MODULE_POSTGRES_PARAM1}' vers la base '${OLIX_MODULE_POSTGRES_PARAM2}'"
@@ -129,6 +174,16 @@ function module_postgres_action_sync()
     module_postgres_isBaseExists "${OLIX_MODULE_POSTGRES_PARAM1}"
     [[ $? -ne 0 ]] && logger_critical "La base '${OLIX_MODULE_POSTGRES_PARAM1}' n'existe pas"
 
+    # Recupération du propriétaire de la base
+    local DBOWNER=$(module_postgres_getSingleResultSQL "SELECT pg_catalog.pg_get_userbyid(d.datdba) FROM pg_catalog.pg_database d WHERE d.datname = '${OLIX_MODULE_POSTGRES_PARAM1}'")
+    [[ -z ${DBOWNER} ]] && logger_critical "Impossible de récupérer le propriétaire de la base '${OLIX_MODULE_POSTGRES_PARAM1}'"
+
+    #Suppression et création de la base
+    module_postgres_dropDatabaseIfExists "${OLIX_MODULE_POSTGRES_PARAM1}"
+    [[ $? -ne 0 ]] && logger_critical "Impossible de supprimer la base '${OLIX_MODULE_POSTGRES_PARAM1}'"
+    module_postgres_createDatabase "${OLIX_MODULE_POSTGRES_PARAM1}" "${DBOWNER}"
+    [[ $? -ne 0 ]] && logger_critical "Impossible de créer la base '${OLIX_MODULE_POSTGRES_PARAM1}'"
+
     # Demande des infos de connexion à la base distante
     stdin_readConnexionServer "" "5432" "postgres"
 
@@ -139,10 +194,8 @@ function module_postgres_action_sync()
     if [[ -n ${OLIX_MODULE_POSTGRES_PARAM2} ]]; then
         logger_info "Synchronisation de la base '${OLIX_STDIN_RETURN_HOST}:${OLIX_MODULE_POSTGRES_PARAM2}' vers '${OLIX_MODULE_POSTGRES_PARAM1}'"
         module_postgres_synchronizeDatabase \
-            "--host=${OLIX_STDIN_RETURN_HOST} --port=${OLIX_STDIN_RETURN_PORT} --username=${OLIX_STDIN_RETURN_USER}" \
-            "${OLIX_MODULE_POSTGRES_PARAM2}" \
-            "--host=${OLIX_MODULE_POSTGRES_HOST} --port=${OLIX_MODULE_POSTGRES_PORT} --username=${OLIX_MODULE_POSTGRES_USER}" \
-            "${OLIX_MODULE_POSTGRES_PARAM1}"
+            "${OLIX_STDIN_RETURN_HOST}" "${OLIX_STDIN_RETURN_PORT}" "${OLIX_STDIN_RETURN_USER}" "" \
+            "${OLIX_MODULE_POSTGRES_PARAM2}" "${OLIX_MODULE_POSTGRES_PARAM1}"
         [[ $? -ne 0 ]] && logger_critical "Echec de la synchronisation de '${OLIX_STDIN_RETURN_HOST}:${OLIX_MODULE_POSTGRES_PARAM2}' vers '${OLIX_MODULE_POSTGRES_PARAM1}'"
         echo -e "${Cvert}Action terminée avec succès${CVOID}"
     fi
@@ -253,6 +306,13 @@ function module_postgres_action_bckwal()
     module_postgres_execSQL "SELECT pg_stop_backup();"
     stdout_printMessageReturn $? "Signalisation à Postgres de la fin de la sauvegarde" "" "$((SECONDS-START))"
     [[ $? -ne 0 ]] && logger_error && IS_ERROR=true
+
+    # Purge des archives des WALS
+    if [[ -n ${OLIX_MODULE_POSTGRES_PARAM1} ]]; then
+        logger_info "Purge des anciennes archives des fichiers WALS"
+        module_postgres_purgeAchiveWals "${OLIX_MODULE_POSTGRES_PARAM1}" "${OLIX_MODULE_POSTGRES_BACKUP_PURGE}"
+        [[ $? -ne 0 ]] && logger_error && IS_ERROR=true
+    fi
 
     stdout_print; stdout_printLine; stdout_print "Sauvegarde terminée en $(core_getTimeExec) secondes" "${Cvert}"
 

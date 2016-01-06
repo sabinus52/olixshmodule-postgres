@@ -84,7 +84,7 @@ function module_postgres_checkConnect()
 function module_postgres_execSQL()
 {
     local OPTS=$(module_postgres_getOptionsConnection "$2" "$3" "$4")
-    logger_debug "module_postgres_getListDatabases (${OPTS})"
+    logger_debug "module_postgres_execSQL (${OPTS})"
     module_postgres_setPassword "$5"
 
     if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
@@ -94,6 +94,29 @@ function module_postgres_execSQL()
     fi
     [[ $? -ne 0 ]] && return 1
     return 0
+}
+
+
+###
+# Execute une requete et retourne la valeur d'un champ
+# @apram $1 : Requete
+# @param $2 : Host du serveur Postgres
+# @param $3 : Port du serveur
+# @param $4 : Utilisateur postgres
+# @param $5 : Mot de passe
+# @return : un champ
+##
+function module_postgres_getSingleResultSQL()
+{
+    local OPTS=$(module_postgres_getOptionsConnection "$2" "$3" "$4")
+    logger_debug "module_postgres_getSingleResultSQL (${OPTS})"
+    module_postgres_setPassword "$5"
+
+    if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
+        echo $(psql ${OPTS} --tuples-only --no-align --command="$1" 2> ${OLIX_LOGGER_FILE_ERR})
+    else
+        echo $(psql ${OPTS} --tuples-only --no-align --command="$1" > /dev/null 2> ${OLIX_LOGGER_FILE_ERR})
+    fi
 }
 
 
@@ -167,6 +190,153 @@ function module_postgres_setPassword()
     elif [[ -n ${OLIX_MODULE_POSTGRES_PASS} ]]; then
         export PGPASSWORD=${OLIX_MODULE_POSTGRES_PASS}
     fi
+}
+
+
+###
+# Crée une nouvelle base de données
+# @param $1 : Nom de la base à créer
+# @param $2 : Propriétaire
+# @param $3 : Host du serveur Postgres
+# @param $4 : Port du serveur
+# @param $5 : Utilisateur postgres
+# @param $6 : Mot de passe
+# @return bool
+##
+function module_postgres_createDatabase()
+{
+    local OPTS=$(module_postgres_getOptionsConnection "$3" "$4" "$5")
+    logger_debug "module_postgres_createDatabase ($1, ${OPTS})"
+
+    if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
+        psql --echo-all ${OPTS} --command="CREATE DATABASE $1 OWNER $2;"
+    else
+        psql ${OPTS} --command="CREATE DATABASE $1 OWNER $2;" 2> ${OLIX_LOGGER_FILE_ERR}
+    fi
+    [[ $? -ne 0 ]] && return 1
+    return 0
+}
+
+
+###
+# Supprime une base de données
+# @param $1 : Nom de la base à créer
+# @param $2 : Host du serveur Postgres
+# @param $3 : Port du serveur
+# @param $4 : Utilisateur postgres
+# @param $5 : Mot de passe
+# @return bool
+##
+function module_postgres_dropDatabase()
+{
+    local OPTS=$(module_postgres_getOptionsConnection "$3" "$4" "$5")
+    logger_debug "module_postgres_dropDatabase ($1, ${OPTS})"
+
+    if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
+        psql --echo-all ${OPTS} --command="DROP DATABASE $1;"
+    else
+        psql ${OPTS} --command="DROP DATABASE $1;" 2> ${OLIX_LOGGER_FILE_ERR}
+    fi
+    [[ $? -ne 0 ]] && return 1
+    return 0
+}
+
+
+###
+# Supprime une base de données même si elle n'existe pas
+# @param $1 : Nom de la base à créer
+# @param $2 : Host du serveur Postgres
+# @param $3 : Port du serveur
+# @param $4 : Utilisateur postgres
+# @param $5 : Mot de passe
+# @return bool
+##
+function module_postgres_dropDatabaseIfExists()
+{
+    local OPTS=$(module_postgres_getOptionsConnection "$3" "$4" "$5")
+    logger_debug "module_postgres_dropDatabaseIfExists ($1, ${OPTS})"
+
+    if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
+        psql --echo-all ${OPTS} --command="DROP DATABASE IF EXISTS $1;"
+    else
+        psql ${OPTS} --command="DROP DATABASE IF EXISTS $1;" 2> ${OLIX_LOGGER_FILE_ERR}
+    fi
+    [[ $? -ne 0 ]] && return 1
+    return 0
+}
+
+
+###
+# Crée un rôle
+# @param $1 : Nom du rôle
+# @param $2 : Mot de passe du rôle
+# @param $3 : Droits du rôle
+# @param $4 : Host du serveur
+# @param $5 : Port du serveur
+# @param $6 : Utilisateur
+# @param $7 : Mot de passe
+##
+function module_postgres_createRole()
+{
+    local OPTS=$(module_postgres_getOptionsConnection "$4" "$5" "$6")
+    logger_debug "module_postgres_createRole ($1, $2, $3, ${OPTS})"
+
+    if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
+        psql --echo-all ${OPTS} --command="CREATE ROLE $1 $3 ENCRYPTED PASSWORD '$2';"
+    else
+        psql ${OPTS} --command="CREATE ROLE $1 $3 ENCRYPTED PASSWORD '$2';" 2> ${OLIX_LOGGER_FILE_ERR}
+    fi
+    [[ $? -ne 0 ]] && return 1
+    return 0
+}
+
+
+###
+# Supprime un rôle
+# @param $1 : Nom du rôle
+# @param $2 : Host du serveur 
+# @param $3 : Port du serveur
+# @param $4 : Utilisateur 
+# @param $5 : Mot de passe
+##
+function module_postgres_dropRole()
+{
+    local OPTS=$(module_postgres_getOptionsConnection "$2" "$3" "$4")
+    logger_debug "module_postgres_dropRole ($1, ${OPTS})"
+
+    # Test si le role existe
+    psql ${OPTS} postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='$1'" | grep -q 1
+    if [[ $? -ne 0 ]]; then
+        logger_warning "Le rôle '$1' n'existe pas"
+        return 0
+    fi
+
+    if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
+        psql --echo-all ${OPTS} --command="DROP ROLE $1;"
+    else
+        psql ${OPTS} --command="DROP ROLE $1;" 2> ${OLIX_LOGGER_FILE_ERR}
+    fi
+    [[ $? -ne 0 ]] && return 1
+    return 0
+}
+
+
+###
+# Test si un rôle existe
+# @param $1 : Nom du rôle
+# @param $2 : Host du serveur 
+# @param $3 : Port du serveur
+# @param $4 : Utilisateur 
+# @param $5 : Mot de passe
+##
+function module_postgres_isRoleExists()
+{
+    local OPTS=$(module_postgres_getOptionsConnection "$2" "$3" "$4")
+    logger_debug "module_postgres_isRoleExists ($1, ${OPTS})"
+
+    psql ${OPTS} postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='$1'" | grep -q 1
+    [[ $? -ne 0 ]] && return 1
+    return 0
 }
 
 
@@ -245,20 +415,24 @@ function module_postgres_restoreDatabase()
 
 ###
 # Copie une base de données depuis un serveur distant vers une base locale
-# @param $1  : Paramètre de connexion de la source
-# @param $2  : Base source
-# @param $3  : Paramètre de connexion locale
-# @param $4  : Base de destination
+# @param $1  : Host du serveur Postgres distant
+# @param $2  : Port du serveur distant
+# @param $3  : Utilisateur Postgres distant
+# @param $4  : Mot de passe distant
+# @param $5  : Base source distante
+# @param $6  : Base de destination locale
 # @return bool
 ##
 function module_postgres_synchronizeDatabase()
 {
-    logger_debug "module_postgres_synchronizeDatabase ($1, $2, $3, $4)"
+    local OPTS_LOCAL=$(module_postgres_getOptionsConnection "" "" "")
+    logger_debug "module_postgres_synchronizeDatabase ($1, $2, $3, $4, $5, $6, ${OPTS_LOCAL})"
+    module_postgres_setPassword "$4"
 
     if [[ ${OLIX_OPTION_VERBOSE} == true ]]; then
-        pg_dump --verbose --format=c $1 $2 | pg_restore --verbose $3 --dbname=$4
+        pg_dump --verbose --format=c --host=$1 --port=$2 --username=$3 $5 | pg_restore --verbose ${OPTS_LOCAL} --dbname=$5
     else
-        pg_dump --format=c $1 $2 | pg_restore $3 --dbname=$4 2> ${OLIX_LOGGER_FILE_ERR}
+        pg_dump --format=c --host=$1 --port=$2 --username=$3 $5 | pg_restore ${OPTS_LOCAL} --dbname=$5 2> ${OLIX_LOGGER_FILE_ERR}
     fi
     [[ $? -eq 0 && ${PIPESTATUS} -eq 0 ]] && return 0
     return 1
@@ -311,4 +485,29 @@ function module_postgres_backupDatabase()
         "${FTP}" "${FTP_HOST}" "${FTP_USER}" "${FTP_PASS}" "${FTP_PATH}"
 
     return $?
+}
+
+
+###
+# Purge les archives WALS
+# @param $1 : Emplacement des archives WALS
+# @param $2 : Retention
+# @return bool
+##
+function module_postgres_purgeAchiveWals()
+{
+    logger_debug "module_postgres_purgeAchiveWals ($1, $2)"
+    local PURGE RET
+    local LIST_FILE_PURGED=$(core_makeTemp)
+
+    # Détermine la retention
+    case ${OLIX_MODULE_POSTGRES_BACKUP_PURGE} in
+        LOG|log)    PURGE=5;;
+        *)          PURGE=${OLIX_MODULE_POSTGRES_BACKUP_PURGE};;
+    esac
+
+    file_purgeStandard "$1" "" "${PURGE}" "${LIST_FILE_PURGED}"
+    RET=$?
+    logger_debug "$(cat ${LIST_FILE_PURGED})"
+    return ${RET}
 }
