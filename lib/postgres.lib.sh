@@ -503,7 +503,7 @@ function module_postgres_purgeAchiveWals()
     # Détermine la retention
     case ${OLIX_MODULE_POSTGRES_BACKUP_PURGE} in
         LOG|log)    PURGE=5;;
-        *)          PURGE=${OLIX_MODULE_POSTGRES_BACKUP_PURGE};;
+        *)          PURGE=$2;;
     esac
 
     file_purgeStandard "$1" "" "${PURGE}" "${LIST_FILE_PURGED}"
