@@ -255,6 +255,10 @@ function module_postgres_action_backup()
     else
         report_terminate "Rapport de backups des bases du serveur ${HOSTNAME}"
     fi
+
+    # Purge des logs
+    logger_info "Purge des logs de rapport"
+    file_purgeStandard "${OLIX_MODULE_POSTGRES_BACKUP_DIR}" "rapport-dump-postgres-" "10"
 }
 
 
@@ -321,5 +325,9 @@ function module_postgres_action_bckwal()
     else
         report_terminate "Rapport de backup à chaud du serveur PostgreSQL ${HOSTNAME}"
     fi
+
+    # Purge des logs
+    logger_info "Purge des logs de rapport"
+    file_purgeStandard "${OLIX_MODULE_POSTGRES_BACKUP_DIR}" "rapport-pgwals-" "10"
 }
 
