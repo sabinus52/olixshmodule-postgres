@@ -82,9 +82,9 @@ function Postgres.base.drop()
     Postgres.server.setPassword $5
 
     if [[ $OLIX_OPTION_VERBOSE == true ]]; then
-        psql --echo-all $CONNECTION --command="DROP DATABASE $1;"
+        psql --echo-all $CONNECTION --command="DROP DATABASE IF EXISTS $1;"
     else
-        psql $CONNECTION --command="DROP DATABASE $1;" 2> ${OLIX_LOGGER_FILE_ERR}
+        psql $CONNECTION --command="DROP DATABASE IF EXISTS $1;" 2> ${OLIX_LOGGER_FILE_ERR}
     fi
     [[ $? -ne 0 ]] && return 1
     return 0
@@ -191,4 +191,24 @@ function Postgres.base.dump.ext()
         p)      echo "sql";;
         *)      echo "dump";;
     esac
+}
+
+
+###
+# Réinitialiase complètement une base
+# @param $1 : Nom de la base
+# @param $2 : Nom du rôle
+# @param $3 : Mot de passe du rôle
+##
+function Postgres.base.initialize()
+{
+    debug "Postgres.base.initialize ($1, $2, $3)"
+
+    Postgres.base.drop $1 $4 $5 $6 $7 || return 1
+    if ! Postgres.role.exists $2 $4 $5 $6 $7; then
+        Postgres.role.drop $2 $4 $5 $6 $7 || return 1
+    fi
+    Postgres.role.create $2 $3 $4 $5 $6 $7 || return 1
+    Postgres.base.create $1 $2 $4 $5 $6 $7 || return 1
+    return 0
 }

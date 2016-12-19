@@ -50,11 +50,15 @@ function Postgres.role.create()
 ###
 # Supprime un rôle
 # @param $1 : Nom du rôle
+# @param $2-5 : Infos de connexion au serveur
 ##
 function Postgres.role.drop()
 {
     local CONNECTION=$(Postgres.server.connection $2 $3 $4)
     debug "Postgres.role.drop ($1, $CONNECTION)"
+    Postgres.server.setPassword $5
+
+    [[ "$1" == "postgres" ]] && warning "Impossible de supprimer le rôle 'postgres'" && return 1
 
     if [[ $OLIX_OPTION_VERBOSE == true ]]; then
         psql --echo-all $CONNECTION --command="DROP ROLE $1;"
