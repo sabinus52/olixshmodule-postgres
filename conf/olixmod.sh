@@ -20,7 +20,6 @@
 ##
 olixmodule_postgres_require_libraries()
 {
-    load "modules/postgres/conf/params.sh"
     load "modules/postgres/lib/*"
 }
 
@@ -46,10 +45,9 @@ olixmodule_postgres_require_binary()
 ###
 # Traitement à effectuer au début d'un traitement
 ##
-olixmodule_postgres_include_begin()
-{
-    olixmodule_postgres_params_parse $@
-}
+# olixmodule_postgres_include_begin()
+# {
+# }
 
 
 ###
