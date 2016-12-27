@@ -90,7 +90,7 @@ function Postgres.server.check()
     debug "Postgres.server.check (${CONNECTION})"
     Postgres.server.setPassword $4
 
-    psql $CONNECTION --no-password --command="\d" postgres > /dev/null
+    psql $CONNECTION --command="\d" postgres > /dev/null
     [[ $? -ne 0 ]] && return 1
 
     return 0

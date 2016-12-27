@@ -19,7 +19,7 @@ function Postgres.base.exists()
     debug "Postgres.base.exists ($1)"
 
     local BASES=$(Postgres.server.databases $2 $3 $4 $5)
-    String.list.contains "$BASES" "$1" && return 0
+    String.list.contains "$BASES postgres" "$1" && return 0
     return 1
 }
 
