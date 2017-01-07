@@ -1,0 +1,161 @@
+
+###
+# Fonction principale
+##
+_olixsh_module()
+{
+    local CURRENT MODULE ACTION PREVIOUS PARAM1 PARAM2 PARAM3 PARAM4 PARAM5
+    local LST_ACTIONS="check create drop dump restore sync backup bckpitr help"
+    COMPREPLY=()
+    CURRENT="${COMP_WORDS[COMP_CWORD]}"
+    PREVIOUS="${COMP_WORDS[COMP_CWORD-1]}"
+
+    if [[ "${PREVIOUS}" == "postgres" ]]; then
+        COMPREPLY=( $(compgen -W "${LST_ACTIONS}" -- ${CURRENT}) )
+        return 0
+    fi
+
+    for I in ${COMP_WORDS[*]}; do
+        if [[ -z ${ACTION} ]]; then
+            [[ ${LST_ACTIONS} =~ (^|[[:space:]])"${I}"($|[[:space:]]) ]] && ACTION=$I && continue
+        else
+            [[ "$I" == "$CURRENT" ]] && continue
+            [[ -z ${PARAM1} ]] && PARAM1=${I} && continue
+            [[ -z ${PARAM2} ]] && PARAM2=${I} && continue
+            [[ -z ${PARAM3} ]] && PARAM3=${I} && continue
+            [[ -z ${PARAM4} ]] && PARAM4=${I} && continue
+            [[ -z ${PARAM5} ]] && PARAM5=${I} && continue
+        fi
+    done
+
+    case "${ACTION}" in
+        check)
+            _olixsh_module_options
+            return 0
+            ;;
+        create)
+            _olixsh_module_options
+            return 0
+            ;;
+        drop)
+            _olixsh_module_drop ${PARAM1}
+            return 0
+            ;;
+        dump)
+            _olixsh_module_dump ${PARAM1} ${PARAM2}
+            return 0
+            ;;
+        restore)
+            _olixsh_module_restore ${PARAM1} ${PARAM2}
+            return 0
+            ;;
+        sync)
+            _olixsh_module_sync ${PARAM1} ${PARAM2} ${PARAM3}
+            return 0
+            ;;
+        backup)
+            _olixsh_module_backup
+            return 0
+            ;;
+        bckpitr)
+            _olixsh_module_bckpitr
+            return 0
+            ;;
+    esac
+}
+
+
+_olixsh_module_options()
+{
+    local CUR="${COMP_WORDS[COMP_CWORD]}"
+    COMPREPLY=( $(compgen -W "--host= --port= --user= --pass=" -- ${CUR}) )
+}
+
+
+###
+# Liste des packages de l'action DUMP du module PostgreSQL
+##
+_olixsh_module_dump()
+{
+    local CUR
+    CUR="${COMP_WORDS[COMP_CWORD]}"
+
+    if [[ -n $1 && -z $2 ]]; then
+        COMPREPLY=( $(compgen -f -- ${CUR}) ) ; return
+    fi
+    if [[ -z $1 && -z $2 ]]; then
+        COMPREPLY=( $(compgen -W "$(${OLIX_ROOT_COMP}/olixsh postgres --list)" -- ${CUR}) ) ; return
+    fi
+    _olixsh_module_options
+}
+
+
+###
+# Liste des packages de l'action RESTORE du module PostgreSQL
+##
+_olixsh_module_restore()
+{
+    local CUR
+    CUR="${COMP_WORDS[COMP_CWORD]}"
+
+    if [[ -n $1 && -z $2 ]]; then
+        COMPREPLY=( $(compgen -W "$(${OLIX_ROOT_COMP}/olixsh postgres --list)" -- ${CUR}) ) ; return
+    fi
+    if [[ -z $1 && -z $2 ]]; then
+        COMPREPLY=( $(compgen -f -- ${CUR}) ) ; return
+    fi
+    _olixsh_module_options
+}
+
+
+###
+# Liste des packages de l'action DROP du module PostgreSQL
+##
+_olixsh_module_drop()
+{
+    local CUR
+    CUR="${COMP_WORDS[COMP_CWORD]}"
+
+    [[ -z $1 ]] && COMPREPLY=( $(compgen -W "$(${OLIX_ROOT_COMP}/olixsh postgres --list)" -- ${CUR}) ) && return
+
+    _olixsh_module_options
+}
+
+
+###
+# Liste des packages de l'action SYNC du module PostgreSQL
+##
+_olixsh_module_sync()
+{
+    local CUR
+    CUR="${COMP_WORDS[COMP_CWORD]}"
+
+    if [[ -n $1 && -n $2 && -z $3 ]]; then
+        COMPREPLY=( $(compgen -W "$(${OLIX_ROOT_COMP}/olixsh postgres --list)" -- ${CUR}) ) ; return
+    fi
+    _olixsh_module_options
+}
+
+
+###
+# Liste des packages de l'action BACKUP du module PostgreSQL
+##
+_olixsh_module_backup()
+{
+    local CUR
+    CUR="${COMP_WORDS[COMP_CWORD]}"
+
+    COMPREPLY=( $(compgen -W "$(${OLIX_ROOT_COMP}/olixsh postgres --list) --format= --host= --port= --user= --pass= --dir= --purge= --gz --bz2 --html --email=" -- ${CUR}) )
+}
+
+
+###
+# Liste des packages de l'action BCKPITR du module PostgreSQL
+##
+_olixsh_module_bckpitr()
+{
+    local CUR
+    CUR="${COMP_WORDS[COMP_CWORD]}"
+
+    COMPREPLY=( $(compgen -W "--wals= --host= --port= --user= --pass= --dir= --purge= --gz --bz2 --html --email=" -- ${CUR}) )
+}
