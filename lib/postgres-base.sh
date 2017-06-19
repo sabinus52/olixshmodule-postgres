@@ -172,7 +172,8 @@ function Postgres.base.backup()
     [[ $? -ne 0 ]] && error && return 1
 
     # Finalise la sauvegarde
-    Backup.continue $DUMP "dump-$BASE-"
+    Backup.continue $DUMP
+    Backup.purge "dump-$BASE-"
 
     return $?
 }
@@ -205,7 +206,7 @@ function Postgres.base.initialize()
     debug "Postgres.base.initialize ($1, $2, $3)"
 
     Postgres.base.drop $1 $4 $5 $6 $7 || return 1
-    if ! Postgres.role.exists $2 $4 $5 $6 $7; then
+    if Postgres.role.exists $2 $4 $5 $6 $7; then
         Postgres.role.drop $2 $4 $5 $6 $7 || return 1
     fi
     Postgres.role.create $2 $3 $4 $5 $6 $7 || return 1
