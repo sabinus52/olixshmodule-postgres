@@ -172,7 +172,8 @@ function Postgres.base.backup()
     [[ $? -ne 0 ]] && error && return 1
 
     # Finalise la sauvegarde
-    Backup.continue $DUMP "dump-$BASE-"
+    Backup.continue $DUMP
+    Backup.purge "dump-$BASE-"
 
     return $?
 }
