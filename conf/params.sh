@@ -44,21 +44,6 @@ function olixmodule_postgres_params_parse()
             --wals=*)
                 OLIX_MODULE_POSTGRES_WALS=$(String.explode.value $1)
                 ;;
-            --dir=*)
-                OLIX_MODULE_POSTGRES_BACKUP_DIR=$(String.explode.value $1)
-                ;;
-            --purge=*)
-                OLIX_MODULE_POSTGRES_BACKUP_PURGE=$(String.explode.value $1)
-                ;;
-            --gz|--bz2)
-                OLIX_MODULE_POSTGRES_BACKUP_COMPRESS=${1/--/}
-                ;;
-            --html)
-                OLIX_MODULE_POSTGRES_BACKUP_REPORT="HTML"
-                ;;
-            --email=*)
-                OLIX_MODULE_POSTGRES_BACKUP_EMAIL=$(String.explode.value $1)
-                ;;
             *)
                 olixmodule_postgres_params_get "${ACTION}" "$1"
                 ;;
@@ -98,9 +83,6 @@ function olixmodule_postgres_params_get()
             [[ -z $OLIX_MODULE_POSTGRES_SOURCE_BASE ]] && OLIX_MODULE_POSTGRES_SOURCE_BASE=$2 && return
             [[ -z $OLIX_MODULE_POSTGRES_BASE ]] && OLIX_MODULE_POSTGRES_BASE=$2 && return
             ;;
-        backup)
-            OLIX_MODULE_POSTGRES_BACKUP_BASES="${OLIX_MODULE_POSTGRES_BACKUP_BASES} $2"
-            ;;
     esac
 }
 
@@ -136,19 +118,6 @@ function olixmodule_postgres_params_debug ()
             debug "OLIX_MODULE_POSTGRES_SOURCE_HOST=${OLIX_MODULE_POSTGRES_SOURCE_HOST}"
             debug "OLIX_MODULE_POSTGRES_SOURCE_BASE=${OLIX_MODULE_POSTGRES_SOURCE_BASE}"
             debug "OLIX_MODULE_POSTGRES_BASE=${OLIX_MODULE_POSTGRES_BASE}"
-            ;;
-        backup)
-            debug "OLIX_MODULE_POSTGRES_BACKUP_BASES=${OLIX_MODULE_POSTGRES_BACKUP_BASES}"
-            debug "OLIX_MODULE_POSTGRES_BACKUP_DIR=${OLIX_MODULE_POSTGRES_BACKUP_DIR}"
-            debug "OLIX_MODULE_POSTGRES_BACKUP_PURGE=${OLIX_MODULE_POSTGRES_BACKUP_PURGE}"
-            debug "OLIX_MODULE_POSTGRES_BACKUP_COMPRESS=${OLIX_MODULE_POSTGRES_BACKUP_COMPRESS}"
-            debug "OLIX_MODULE_POSTGRES_BACKUP_REPORT=${OLIX_MODULE_POSTGRES_BACKUP_REPORT}"
-            debug "OLIX_MODULE_POSTGRES_BACKUP_EMAIL=${OLIX_MODULE_POSTGRES_BACKUP_EMAIL}"
-            debug "OLIX_MODULE_POSTGRES_FORMAT=${OLIX_MODULE_POSTGRES_FORMAT}"
-            ;;
-        bckpitr)
-            debug "OLIX_MODULE_POSTGRES_PATH=${OLIX_MODULE_POSTGRES_PATH}"
-            debug "OLIX_MODULE_POSTGRES_WALS=${OLIX_MODULE_POSTGRES_WALS}"
             ;;
     esac
 }

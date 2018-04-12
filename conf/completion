@@ -5,7 +5,7 @@
 _olixsh_module()
 {
     local CURRENT MODULE ACTION PREVIOUS PARAM1 PARAM2 PARAM3 PARAM4 PARAM5
-    local LST_ACTIONS="check create drop dump restore sync backup bckpitr help"
+    local LST_ACTIONS="check create drop dump restore sync help"
     COMPREPLY=()
     CURRENT="${COMP_WORDS[COMP_CWORD]}"
     PREVIOUS="${COMP_WORDS[COMP_CWORD-1]}"
@@ -51,14 +51,6 @@ _olixsh_module()
             ;;
         sync)
             _olixsh_module_sync ${PARAM1} ${PARAM2} ${PARAM3}
-            return 0
-            ;;
-        backup)
-            _olixsh_module_backup
-            return 0
-            ;;
-        bckpitr)
-            _olixsh_module_bckpitr
             return 0
             ;;
     esac
@@ -134,28 +126,4 @@ _olixsh_module_sync()
         COMPREPLY=( $(compgen -W "$(${OLIX_ROOT_COMP}/olixsh postgres --list)" -- ${CUR}) ) ; return
     fi
     _olixsh_module_options
-}
-
-
-###
-# Liste des packages de l'action BACKUP du module PostgreSQL
-##
-_olixsh_module_backup()
-{
-    local CUR
-    CUR="${COMP_WORDS[COMP_CWORD]}"
-
-    COMPREPLY=( $(compgen -W "$(${OLIX_ROOT_COMP}/olixsh postgres --list) --format= --host= --port= --user= --pass= --dir= --purge= --gz --bz2 --html --email=" -- ${CUR}) )
-}
-
-
-###
-# Liste des packages de l'action BCKPITR du module PostgreSQL
-##
-_olixsh_module_bckpitr()
-{
-    local CUR
-    CUR="${COMP_WORDS[COMP_CWORD]}"
-
-    COMPREPLY=( $(compgen -W "--wals= --host= --port= --user= --pass= --dir= --purge= --gz --bz2 --html --email=" -- ${CUR}) )
 }

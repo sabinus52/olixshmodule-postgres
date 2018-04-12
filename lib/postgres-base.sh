@@ -148,32 +148,18 @@ function Postgres.base.restore()
 # Fait une sauvegarde d'une base PostgreSQL
 # @param $1 : Nom de la base
 # @param $2 : Format des dumps
+# @param $3 : Format du dump
+# @param $4 : Compression
 # @return bool
 ##
 function Postgres.base.backup()
 {
-    debug "Postgres.base.backup ($1)"
-    local BASE=$1
+    local CONNECTION=$(Postgres.server.connection $5 $6 $7)
+    debug "Postgres.base.backup ($1, $2, $3, $4, $CONNECTION)"
 
-    Print.head2 "Dump de la base PostgreSQL %s" "$BASE"
+    local BINCOMPRESS=$(Compression.binary $4)
 
-    if ! Postgres.base.exists $BASE; then
-        warning "La base '${BASE}' n'existe pas"
-        return 1
-    fi
-
-    local DUMP="$(Backup.path)/dump-$BASE-$OLIX_SYSTEM_DATE.$(Postgres.base.dump.ext $2)"
-    info "Sauvegarde base PostgreSQL (${BASE}) -> ${DUMP}"
-
-    local START=${SECONDS}
-
-    Postgres.base.dump $BASE $DUMP
-    Print.result $? "Sauvegarde de la base" "$(File.size.human $DUMP)" "$((SECONDS-START))"
-    [[ $? -ne 0 ]] && error && return 1
-
-    # Finalise la sauvegarde
-    Backup.continue $DUMP
-    Backup.purge "dump-$BASE-"
+    Postgres.base.dump $1 $2 $3 $5 $6 $7
 
     return $?
 }
