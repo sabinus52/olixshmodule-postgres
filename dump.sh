@@ -25,7 +25,11 @@ if [[ -z $OLIX_MODULE_POSTGRES_DUMP ]]; then
 fi
 
 # Si la base existe
-Postgres.base.exists $OLIX_MODULE_POSTGRES_BASE
+if [[ -z ${OLIX_MODULE_POSTGRES_DOCK} ]]; then
+    Postgres.base.exists $OLIX_MODULE_POSTGRES_BASE
+else
+    Postgres.docker.base.exists "${OLIX_MODULE_POSTGRES_DOCK}" "$OLIX_MODULE_POSTGRES_BASE"
+fi
 [[ $? -ne 0 ]] && critical "La base '${OLIX_MODULE_POSTGRES_BASE}' n'existe pas"
 
 # Si le dump peut être créé
@@ -38,8 +42,19 @@ File.created $OLIX_MODULE_POSTGRES_DUMP
 ##
 info "Dump de la base '${OLIX_MODULE_POSTGRES_BASE}' vers le fichier '${OLIX_MODULE_POSTGRES_DUMP}'"
 
-Postgres.base.dump $OLIX_MODULE_POSTGRES_BASE $OLIX_MODULE_POSTGRES_DUMP $OLIX_MODULE_POSTGRES_FORMAT
-[[ $? -ne 0 ]] && critical "Echec du dump de la base '${OLIX_MODULE_POSTGRES_BASE}' vers le fichier '${OLIX_MODULE_POSTGRES_DUMP}'"
+if [[ -z ${OLIX_MODULE_POSTGRES_DOCK} ]]; then
+
+    # Mode server
+    Postgres.base.dump $OLIX_MODULE_POSTGRES_BASE $OLIX_MODULE_POSTGRES_DUMP $OLIX_MODULE_POSTGRES_FORMAT
+    [[ $? -ne 0 ]] && critical "Echec du dump de la base '${OLIX_MODULE_POSTGRES_BASE}' vers le fichier '${OLIX_MODULE_POSTGRES_DUMP}'"
+
+else
+
+    # Mode docker
+    Postgres.docker.base.dump ${OLIX_MODULE_POSTGRES_DOCK} ${OLIX_MODULE_POSTGRES_BASE} ${OLIX_MODULE_POSTGRES_DUMP} ${OLIX_MODULE_POSTGRES_FORMAT}
+    [[ $? -ne 0 ]] && critical "Echec du dump de la base ${OLIX_MODULE_POSTGRES_DOCK}:'${OLIX_MODULE_POSTGRES_BASE}' vers le fichier '${OLIX_MODULE_POSTGRES_DUMP}'"
+
+fi
 
 
 ###

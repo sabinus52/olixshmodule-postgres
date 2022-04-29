@@ -115,10 +115,12 @@ function olixmodule_postgres_params_debug ()
             debug "OLIX_MODULE_POSTGRES_BASE=${OLIX_MODULE_POSTGRES_BASE}"
             debug "OLIX_MODULE_POSTGRES_DUMP=${OLIX_MODULE_POSTGRES_DUMP}"
             debug "OLIX_MODULE_POSTGRES_FORMAT=${OLIX_MODULE_POSTGRES_FORMAT}"
+            debug "OLIX_MODULE_POSTGRES_DOCK=${OLIX_MODULE_POSTGRES_DOCK}"
             ;;
         restore)
             debug "OLIX_MODULE_POSTGRES_DUMP=${OLIX_MODULE_POSTGRES_DUMP}"
             debug "OLIX_MODULE_POSTGRES_BASE=${OLIX_MODULE_POSTGRES_BASE}"
+            debug "OLIX_MODULE_POSTGRES_DOCK=${OLIX_MODULE_POSTGRES_DOCK}"
             ;;
         sync)
             debug "OLIX_MODULE_POSTGRES_SOURCE_HOST=${OLIX_MODULE_POSTGRES_SOURCE_HOST}"
