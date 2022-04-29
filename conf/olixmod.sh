@@ -20,6 +20,7 @@
 ##
 olixmodule_postgres_require_libraries()
 {
+    load "utils/docker.sh"
     load "modules/postgres/lib/*"
 }
 

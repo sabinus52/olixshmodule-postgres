@@ -43,6 +43,7 @@ function olixmodule_postgres_usage_check()
     echo
     echo -e "${Ccyan}OPTIONS${CVOID}"
     olixmodule_postgres_usage_paramserver
+    echo -en "${CBLANC} --dock= ${CVOID}"; String.pad "--dock=" 30 " "; echo " : Nom du container docker"
 }
 
 

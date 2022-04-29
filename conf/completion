@@ -60,7 +60,7 @@ _olixsh_module()
 _olixsh_module_options()
 {
     local CUR="${COMP_WORDS[COMP_CWORD]}"
-    COMPREPLY=( $(compgen -W "--host= --port= --user= --pass=" -- ${CUR}) )
+    COMPREPLY=( $(compgen -W "--host= --port= --user= --pass= --dock=" -- ${CUR}) )
 }
 
 
