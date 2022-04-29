@@ -4,14 +4,17 @@ Module for oliXsh : Management of PostgreSQL server
 
 **INFO** : La plupart des paramètres peuvent être configurés dans le fichier */etc/olixsh/postgres.conf* ou via la commande *setcfg*
 
+Pour réaliser une sauvegarde ou une restauration d'une base de données depuis un containeur Docker PostgreSQL, il suffit d'utiliser la paramètre `dock`
+
 
 ### Test de connexion au serveur PostgreSQL
 
-Command : `olixsh postgres check [--host=<host>] [--port=5432] [--user=<user>]`
+Command : `olixsh postgres check [--host=<host>] [--port=5432] [--user=<user>]  [--dock=<container>]`
 
 - `--host=<host>` : Host du serveur PostgreSQL
 - `--port=5432` : Port du serveur PostgreSQL
 - `--user=<user>` : Utilisateur de connexion au serveur PostgreSQL
+- `--dock=<container>` : Nom du containeur Docker PostgreSQL
 
 Ces paramètres surchargent celles saisies lors de la commande **init** situées dans */etc/olixsh/postgres.conf*
 
@@ -19,23 +22,41 @@ Ces paramètres surchargent celles saisies lors de la commande **init** situées
 
 ### Dump d'une base de données PostgreSQL
 
-Command : `olixsh postgres postgres <base> <dump_file> [--format=c|t|d|p] [--host=<host>] [--port=5432] [--user=<user>]`
+Command : `olixsh postgres postgres <base> <dump_file> [--format=c|t|d|p] [--host=<host>] [--port=5432] [--user=<user>] [--dock=<container>]`
 
 - `base` : Nom de la base à sauvegarder
 - `dump_file` : Emplacement et nom du fichier du dump de la base
 - `--format` : Format du dump (personnalisé, archive, répertoire, mode sql)
 
+Exemple :
+~~~ bash
+# Sauvegarde en utilisant les paramètres de connexion définis dans le fichier /etc/olixsh/postgres.conf
+olixsh postgres dump toto /tmp/toto.sql
+# Sauvegarde en utilisant l'utilisateur titi
+olixsh postgres dump toto /tmp/toto.sql --user=titi
+# Sauvegarde de la base toto à travers le containeur casimir et l'utilisateur titi
+olixsh postgres dump toto /tmp/toto.sql --dock=casimir --user=titi
+~~~
 
 
 ### Restauration d'une base de données PostgreSQL
 
-Command : `olixsh postgres restore <dump_file> <base> [--host=<host>] [--port=5432] [--user=<user>]`
+Command : `olixsh postgres restore <dump_file> <base> [--host=<host>] [--port=5432] [--user=<user>] [--dock=<container>]`
 
 - `dump_file` : Emplacement et nom du fichier à restaurer
 - `base` : Nom de la base à restaurer
 
 NB : La base sera supprimée puis recréée avec le même propriétaire
 
+Exemple :
+~~~ bash
+# Restauration en utilisant les paramètres de connexion définis dans le fichier /etc/olixsh/postgres.conf
+olixsh postgres restore /tmp/toto.sql toto
+# Restauration en utilisant l'utilisateur titi
+olixsh postgres restore /tmp/toto.sql toto --user=titi
+# Restauration de la base toto à travers le containeur casimir et l'utilisateur titi
+olixsh postgres restore /tmp/toto.sql toto --dock=casimir --user=titi
+~~~
 
 
 ### Création d'une base de données PostgreSQL
@@ -64,38 +85,3 @@ Command : `olixsh postgres sync <user@host[:port]> <base_source> <base_destinati
 - `base_destination` : Nom de la base de destination à coller
 - `user@host[:port]` : Info de connexion au serveur PostgreSQL distant
 - `base_source` : Nom de la base de source du serveur distant
-
-
-
-### Backup des bases d'un serveur PostgreSQL
-
-Réalisation d'une sauvegarde des bases PostgreSQL avec rapport pour des tâches planifiées.
-
-Command : `olixsh postgres backup [bases...] [--format=c|t|d|p] [--host=<host>] [--port=5432] [--user=<user>] [--dir=/tmp] [--purge=5] [--gz|--bz2] [--html] [--email=<name@domain.ltd>]
-
-- `base` : Liste des bases à sauvegarder. Si omis, *toutes les bases*
-- `--format=c` : Format du dump (personnalisé, archive, répertoire, mode sql)
-- `--dir=/tmp` : Chemin de stockage des backups. Par defaut */tmp*
-- `--purge=5` : Nombre de jours avant la purge des anciens backups. Par défaut *5*
-- `--gz` : Compression du dump au format gzip
-- `--bz2` : Compression du dump au format bzip2
-- `--html` : Rapport au format HTML sinon au format TEXT par défaut
-- `--email=name@domain.ltd` : Envoi du rapport à l'adresse *name@domain.ltd*
-
-
-
-### Sauvegarde à chaud en mode PITR de l'instance PostgreSQL
-
-Réalisation d'une sauvegarde à chaud en mode PITR de l'instance PostgreSQL avec rapport pour des tâches planifiées.
-
-Command : `olixsh postgres bckwal [--pgdata=<path_instance>] [--wals=<path_wals>] [--port=5432] [--user=<user>] [--dir=/tmp] [--purge=5] [--gz|--bz2] [--html] [--email=<name@domain.ltd>]
-
-- `--pgdata=` : Emplacement de l'instance PostgreSQL
-- `--wals=` : Emplacement des fichiers d'archive WALs à purger
-- `--dir=/tmp` : Chemin de stockage des backups. Par defaut */tmp*
-- `--purge=5` : Nombre de jours avant la purge des anciens backups. Par défaut *5*
-- `--gz` : Compression du dump au format gzip
-- `--bz2` : Compression du dump au format bzip2
-- `--html` : Rapport au format HTML sinon au format TEXT par défaut
-- `--email=name@domain.ltd` : Envoi du rapport à l'adresse *name@domain.ltd*
-
