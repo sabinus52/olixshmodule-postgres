@@ -29,7 +29,11 @@ File.exists $OLIX_MODULE_POSTGRES_DUMP
 [[ $? -ne 0 ]] && critical "Le dump '${OLIX_MODULE_POSTGRES_DUMP}' est absent ou inaccessible"
 
 # Si la base existe
-Postgres.base.exists $OLIX_MODULE_POSTGRES_BASE
+if [[ -z ${OLIX_MODULE_POSTGRES_DOCK} ]]; then
+    Postgres.base.exists $OLIX_MODULE_POSTGRES_BASE
+else
+    Postgres.docker.base.exists "${OLIX_MODULE_POSTGRES_DOCK}" "$OLIX_MODULE_POSTGRES_BASE"
+fi
 [[ $? -ne 0 ]] && critical "La base '${OLIX_MODULE_POSTGRES_BASE}' n'existe pas"
 
 
@@ -46,20 +50,42 @@ Read.confirm "Confirmer" false
 ##
 info "Restauration du dump '${OLIX_MODULE_POSTGRES_DUMP}' vers la base '${OLIX_MODULE_POSTGRES_BASE}'"
 
-# Recupération du propriétaire de la base
-OLIX_MODULE_POSTGRES_OWNER=$(Postgres.base.owner $OLIX_MODULE_POSTGRES_BASE)
-[[ -z $OLIX_MODULE_POSTGRES_OWNER ]] && critical "Impossible de récupérer le propriétaire de la base '${OLIX_MODULE_POSTGRES_BASE}'"
 
-#Suppression et création de la base
-info "Suppression et création de la base '${OLIX_MODULE_POSTGRES_BASE}' comme propriétaire '${OLIX_MODULE_POSTGRES_OWNER}'"
-Postgres.base.drop $OLIX_MODULE_POSTGRES_BASE
-[[ $? -ne 0 ]] && critical "Impossible de supprimer la base '${OLIX_MODULE_POSTGRES_BASE}'"
-Postgres.base.create $OLIX_MODULE_POSTGRES_BASE $OLIX_MODULE_POSTGRES_OWNER
-[[ $? -ne 0 ]] && critical "Impossible de créer la base '${OLIX_MODULE_POSTGRES_BASE}'"
+if [[ -z ${OLIX_MODULE_POSTGRES_DOCK} ]]; then
 
-# Restauration
-Postgres.base.restore $OLIX_MODULE_POSTGRES_BASE $OLIX_MODULE_POSTGRES_DUMP
-[[ $? -ne 0 ]] && critical "Echec de la restauration du dump '${OLIX_MODULE_POSTGRES_DUMP}' vers la base '${OLIX_MODULE_POSTGRES_BASE}'"
+    # Mode server
+    # Recupération du propriétaire de la base
+    OLIX_MODULE_POSTGRES_OWNER=$(Postgres.base.owner $OLIX_MODULE_POSTGRES_BASE)
+    [[ -z $OLIX_MODULE_POSTGRES_OWNER ]] && critical "Impossible de récupérer le propriétaire de la base '${OLIX_MODULE_POSTGRES_BASE}'"
+
+    #Suppression et création de la base
+    info "Suppression et création de la base '${OLIX_MODULE_POSTGRES_BASE}' comme propriétaire '${OLIX_MODULE_POSTGRES_OWNER}'"
+    Postgres.base.drop $OLIX_MODULE_POSTGRES_BASE
+    [[ $? -ne 0 ]] && critical "Impossible de supprimer la base '${OLIX_MODULE_POSTGRES_BASE}'"
+    Postgres.base.create $OLIX_MODULE_POSTGRES_BASE $OLIX_MODULE_POSTGRES_OWNER
+    [[ $? -ne 0 ]] && critical "Impossible de créer la base '${OLIX_MODULE_POSTGRES_BASE}'"
+
+    # Restauration
+    Postgres.base.restore $OLIX_MODULE_POSTGRES_BASE $OLIX_MODULE_POSTGRES_DUMP
+    [[ $? -ne 0 ]] && critical "Echec de la restauration du dump '${OLIX_MODULE_POSTGRES_DUMP}' vers la base '${OLIX_MODULE_POSTGRES_BASE}'"
+
+else
+
+    # Mode docker
+    #Suppression et création de la base
+    info "Suppression et création de la base '${OLIX_MODULE_POSTGRES_BASE}' comme propriétaire '${OLIX_MODULE_POSTGRES_USER}'"
+    Postgres.docker.base.drop ${OLIX_MODULE_POSTGRES_DOCK} ${OLIX_MODULE_POSTGRES_BASE}
+    [[ $? -ne 0 ]] && critical "Impossible de supprimer la base '${OLIX_MODULE_POSTGRES_BASE}'"
+    Postgres.docker.base.create ${OLIX_MODULE_POSTGRES_DOCK} ${OLIX_MODULE_POSTGRES_BASE} ${OLIX_MODULE_POSTGRES_USER}
+    [[ $? -ne 0 ]] && critical "Impossible de créer la base '${OLIX_MODULE_POSTGRES_BASE}'"
+
+    # Restauration
+    Postgres.docker.base.restore ${OLIX_MODULE_POSTGRES_DOCK} ${OLIX_MODULE_POSTGRES_BASE} ${OLIX_MODULE_POSTGRES_DUMP}
+    [[ $? -ne 0 ]] && critical "Echec de la restauration du dump ${OLIX_MODULE_POSTGRES_DOCK}:'${OLIX_MODULE_POSTGRES_DUMP}' vers la base '${OLIX_MODULE_POSTGRES_BASE}'"
+
+fi
+
+
 
 
 

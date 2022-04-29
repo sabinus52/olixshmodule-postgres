@@ -43,6 +43,7 @@ function olixmodule_postgres_usage_check()
     echo
     echo -e "${Ccyan}OPTIONS${CVOID}"
     olixmodule_postgres_usage_paramserver
+    echo -en "${CBLANC} --dock= ${CVOID}"; String.pad "--dock=" 30 " "; echo " : Nom du container docker"
 }
 
 
@@ -60,6 +61,7 @@ function olixmodule_postgres_usage_dump()
     echo -e "${Ccyan}OPTIONS${CVOID}"
     echo -en "${CBLANC} --format=$OLIX_MODULE_POSTGRES_FORMAT ${CVOID}"; String.pad "--format=$OLIX_MODULE_POSTGRES_FORMAT" 30 " "; echo " : Format du fichier de sortie (dump)"
     olixmodule_postgres_usage_paramserver
+    echo -en "${CBLANC} --dock= ${CVOID}"; String.pad "--dock=" 30 " "; echo " : Nom du container docker"
     echo
     olixmodule_postgres_usage_listbases
 }
@@ -78,6 +80,7 @@ function olixmodule_postgres_usage_restore()
     echo
     echo -e "${Ccyan}OPTIONS${CVOID}"
     olixmodule_postgres_usage_paramserver
+    echo -en "${CBLANC} --dock= ${CVOID}"; String.pad "--dock=" 30 " "; echo " : Nom du container docker"
     echo
     olixmodule_postgres_usage_listbases
 }
