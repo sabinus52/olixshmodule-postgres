@@ -95,7 +95,7 @@ function Postgres.base.drop()
 # Fait un dump d'une base
 # @param $1  : Nom de la base
 # @param $2  : Fichier de dump
-# @param $3  : Format du dump
+# @param $3  : Options en extra
 # @param $4-7 : Infos de connexion au serveur
 # @return bool
 ##
@@ -105,15 +105,11 @@ function Postgres.base.dump()
     debug "Postgres.base.dump ($1, $2, $3, ${CONNECTION})"
     Postgres.server.setPassword $7
 
-    local FORMAT=c
-    [[ -n $3 ]] && FORMAT=$3
-    FORMAT=${FORMAT:0:1}
-
-    debug "pg_dump --format=$FORMAT $CONNECTION --file=$2 $1"
+    debug "pg_dump $3 $CONNECTION --file=$2 $1"
     if [[ $OLIX_OPTION_VERBOSE == true ]]; then
-        pg_dump --verbose --format=$FORMAT $CONNECTION --file=$2 $1
+        pg_dump --verbose $3 $CONNECTION --file=$2 $1
     else
-        pg_dump --format=$FORMAT $CONNECTION --file=$2 $1 2> ${OLIX_LOGGER_FILE_ERR}
+        pg_dump $3 $CONNECTION --file=$2 $1 2> ${OLIX_LOGGER_FILE_ERR}
     fi
     [[ $? -ne 0 ]] && return 1
     return 0
@@ -172,7 +168,8 @@ function Postgres.base.backup()
 function Postgres.base.dump.ext()
 {
     debug "Postgres.base.dump.ext ($1)"
-    local FORMAT=${1:0:1}
+    local FORMAT=$(echo "$1" | grep -oP "\--format=\K\w+")
+    FORMAT=${FORMAT:0:1}
     case $FORMAT in
         c)      echo "dumpz";;
         p)      echo "sql";;

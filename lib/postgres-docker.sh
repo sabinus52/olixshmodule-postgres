@@ -87,7 +87,7 @@ function Postgres.docker.base.exists()
 # @param $1 : Nom du containeur
 # @param $2 : Nom de la base
 # @param $3 : Fichier de dump
-# @param $4 : Format du dump
+# @param $4 : Options en extra
 # @param $5 : Infos de connexion au serveur
 # @return bool
 ##
@@ -96,15 +96,11 @@ function Postgres.docker.base.dump()
     local CONNECTION=$(Postgres.docker.connection $5)
     debug "Postgres.docker.base.dump ($1, $2, $3, $4, ${CONNECTION})"
 
-    local FORMAT=c
-    [[ -n $4 ]] && FORMAT=$4
-    FORMAT=${FORMAT:0:1}
-
-    debug "docker exec -i $1 pg_dump --format=$FORMAT $CONNECTION $2 > $3"
+    debug "docker exec -i $1 pg_dump $4 $CONNECTION $2 > $3"
     if [[ $OLIX_OPTION_VERBOSE == true ]]; then
-        docker exec -i $1 pg_dump --verbose --format=$FORMAT $CONNECTION $2 > $3
+        docker exec -i $1 pg_dump --verbose $4 $CONNECTION $2 > $3
     else
-        docker exec -i $1 pg_dump --format=$FORMAT $CONNECTION $2 > $3 2> ${OLIX_LOGGER_FILE_ERR}
+        docker exec -i $1 pg_dump $4 $CONNECTION $2 > $3 2> ${OLIX_LOGGER_FILE_ERR}
     fi
     [[ $? -ne 0 ]] && return 1
     return 0

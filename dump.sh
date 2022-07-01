@@ -45,13 +45,13 @@ info "Dump de la base '${OLIX_MODULE_POSTGRES_BASE}' vers le fichier '${OLIX_MOD
 if [[ -z ${OLIX_MODULE_POSTGRES_DOCK} ]]; then
 
     # Mode server
-    Postgres.base.dump $OLIX_MODULE_POSTGRES_BASE $OLIX_MODULE_POSTGRES_DUMP $OLIX_MODULE_POSTGRES_FORMAT
+    Postgres.base.dump $OLIX_MODULE_POSTGRES_BASE $OLIX_MODULE_POSTGRES_DUMP "--format=$OLIX_MODULE_POSTGRES_FORMAT $OLIX_MODULE_POSTGRES_EXTRAOPTS"
     [[ $? -ne 0 ]] && critical "Echec du dump de la base '${OLIX_MODULE_POSTGRES_BASE}' vers le fichier '${OLIX_MODULE_POSTGRES_DUMP}'"
 
 else
 
     # Mode docker
-    Postgres.docker.base.dump ${OLIX_MODULE_POSTGRES_DOCK} ${OLIX_MODULE_POSTGRES_BASE} ${OLIX_MODULE_POSTGRES_DUMP} ${OLIX_MODULE_POSTGRES_FORMAT}
+    Postgres.docker.base.dump ${OLIX_MODULE_POSTGRES_DOCK} ${OLIX_MODULE_POSTGRES_BASE} ${OLIX_MODULE_POSTGRES_DUMP} "--format=${OLIX_MODULE_POSTGRES_FORMAT} $OLIX_MODULE_POSTGRES_EXTRAOPTS"
     [[ $? -ne 0 ]] && critical "Echec du dump de la base ${OLIX_MODULE_POSTGRES_DOCK}:'${OLIX_MODULE_POSTGRES_BASE}' vers le fichier '${OLIX_MODULE_POSTGRES_DUMP}'"
 
 fi
