@@ -47,6 +47,9 @@ function olixmodule_postgres_params_parse()
             --wals=*)
                 OLIX_MODULE_POSTGRES_WALS=$(String.explode.value $1)
                 ;;
+            --*)
+                olixmodule_postgres_params_extra "${ACTION}" "$1"
+                ;;
             *)
                 olixmodule_postgres_params_get "${ACTION}" "$1"
                 ;;
@@ -91,6 +94,17 @@ function olixmodule_postgres_params_get()
 
 
 ###
+# Fonction de récupération des paramètres postgres en plus (--*)
+# @param $1 : Nom de l'action
+# @param $2 : Nom du paramètre
+##
+function olixmodule_postgres_params_extra()
+{
+    OLIX_MODULE_POSTGRES_EXTRAOPTS="$OLIX_MODULE_POSTGRES_EXTRAOPTS $2"
+}
+
+
+###
 # Mode DEBUG
 # @param $1 : Action du module
 ##
@@ -100,6 +114,7 @@ function olixmodule_postgres_params_debug ()
     debug "OLIX_MODULE_POSTGRES_PORT=${OLIX_MODULE_POSTGRES_PORT}"
     debug "OLIX_MODULE_POSTGRES_USER=${OLIX_MODULE_POSTGRES_USER}"
     debug "OLIX_MODULE_POSTGRES_PASS=${OLIX_MODULE_POSTGRES_PASS}"
+    debug "OLIX_MODULE_POSTGRES_EXTRAOPTS=${OLIX_MODULE_POSTGRES_EXTRAOPTS}"
     case $1 in
         check)
             debug "OLIX_MODULE_POSTGRES_DOCK=${OLIX_MODULE_POSTGRES_DOCK}"

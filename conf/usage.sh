@@ -56,7 +56,7 @@ function olixmodule_postgres_usage_dump()
     echo
     echo -e "Faire un dump d'une base de données PostgreSQL"
     echo
-    echo -e "${CBLANC} Usage : ${CVIOLET}$(basename $OLIX_ROOT_SCRIPT) ${CVERT}postgres ${CJAUNE}dump${CVOID} ${CBLANC}<base> <dumpfile> [OPTIONS]${CVOID}"
+    echo -e "${CBLANC} Usage : ${CVIOLET}$(basename $OLIX_ROOT_SCRIPT) ${CVERT}postgres ${CJAUNE}dump${CVOID} ${CBLANC}<base> <dumpfile> [OPTIONS] [EXTRA OPTS PGDUMP]${CVOID}"
     echo
     echo -e "${Ccyan}OPTIONS${CVOID}"
     echo -en "${CBLANC} --format=$OLIX_MODULE_POSTGRES_FORMAT ${CVOID}"; String.pad "--format=$OLIX_MODULE_POSTGRES_FORMAT" 30 " "; echo " : Format du fichier de sortie (dump)"
